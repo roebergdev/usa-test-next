@@ -56,13 +56,12 @@ export function useGame() {
   const saveScore = async () => {
     if (scoreSaved || !playerName || score === 0) return;
     setScoreSaved(true);
-    try {
-      await supabase.from('leaderboard').insert({
-        display_name: playerName,
-        score,
-      });
-    } catch (err) {
-      console.error('Failed to save score:', err);
+    const { error } = await supabase.from('leaderboard').insert({
+      display_name: playerName,
+      score,
+    });
+    if (error) {
+      console.error('Failed to save score:', error.message, error.details, error.hint);
     }
   };
 
