@@ -4,27 +4,34 @@ import { masterQuestions } from '@/data/masterQuestions';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
-  // Allow access via admin secret key or authenticated Supabase session
   const adminKey = request.headers.get('x-admin-key');
   const authToken = request.headers.get('authorization')?.replace('Bearer ', '');
 
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
   let authorized = adminKey === process.env.ADMIN_SECRET_KEY;
+  let supabase;
 
   if (!authorized && authToken) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     const sb = createSupabaseClient(url, key, {
       global: { headers: { Authorization: `Bearer ${authToken}` } },
     });
     const { data: { user } } = await sb.auth.getUser();
-    authorized = !!user;
+    if (user) {
+      authorized = true;
+      supabase = sb; // Reuse authenticated client for DB operations
+    }
   }
 
   if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
-  const supabase = await createClient();
+  // Fall back to anon client for admin-key auth
+  if (!supabase) {
+    supabase = await createClient();
+  }
 
   try {
     const { data: existing } = await supabase.from('questions').select('text');
