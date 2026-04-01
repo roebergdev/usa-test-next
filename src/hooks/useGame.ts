@@ -118,7 +118,7 @@ export function useGame() {
     playSound(correct);
 
     if (correct) {
-      setScore((prev) => prev + Math.floor(currentQ.difficulty * 10));
+      setScore((prev) => prev + 1);
     }
 
     const questionNumber = currentQuestionIndex + 1;

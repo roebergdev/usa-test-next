@@ -1,10 +1,10 @@
 export const RANKS = [
   { name: "Pioneer", threshold: 0 },
-  { name: "Revolutionary", threshold: 1000 },
-  { name: "Statesman", threshold: 3000 },
-  { name: "Vanguard", threshold: 6000 },
-  { name: "Defender of Freedom", threshold: 10000 },
-  { name: "Ultimate Patriot", threshold: 15000 }
+  { name: "Revolutionary", threshold: 3 },
+  { name: "Statesman", threshold: 5 },
+  { name: "Vanguard", threshold: 7 },
+  { name: "Defender of Freedom", threshold: 9 },
+  { name: "Ultimate Patriot", threshold: 10 }
 ];
 
 export function getRank(score: number) {
@@ -17,7 +17,7 @@ export function getRank(score: number) {
       };
     }
   }
-  return { name: "Pioneer", level: 1, nextThreshold: 1000 };
+  return { name: "Pioneer", level: 1, nextThreshold: 3 };
 }
 
 export const TIMER_SECONDS = 10;

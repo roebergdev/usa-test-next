@@ -55,7 +55,7 @@ export function GameOver({ score, onRestart, onGoToLobby, onSaveScore, scoreSave
             Score
           </div>
           <div className="text-4xl sm:text-6xl font-black tracking-tighter text-amac-red">
-            {score.toLocaleString()}
+            {score}/10
           </div>
         </div>
       </div>
