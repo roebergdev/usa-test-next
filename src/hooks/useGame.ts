@@ -32,10 +32,10 @@ export function useGame() {
 
   // Timer logic
   useEffect(() => {
-    if (gameState === 'playing' && timeLeft > 0 && !selectedAnswer) {
+    if (gameState === 'playing' && timeLeft > 0 && selectedAnswer === null) {
       const timer = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && gameState === 'playing' && !selectedAnswer) {
+    } else if (timeLeft === 0 && gameState === 'playing' && selectedAnswer === null) {
       handleAnswer('');
     }
   }, [timeLeft, gameState, selectedAnswer]);
