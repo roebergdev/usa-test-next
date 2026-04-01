@@ -1,37 +1,15 @@
 'use client';
 
-import { useState } from 'react';
 import { Leaderboard } from '@/components/Leaderboard';
 import { motion } from 'motion/react';
 import { Play, Star } from 'lucide-react';
 
 interface GameLobbyProps {
-  playerName: string;
-  nameConfirmed: boolean;
-  onNameChange: (name: string) => void;
-  onConfirmName: (name: string) => void;
   onStartGame: () => void;
   loading: boolean;
 }
 
-export function GameLobby({
-  playerName,
-  nameConfirmed,
-  onNameChange,
-  onConfirmName,
-  onStartGame,
-  loading,
-}: GameLobbyProps) {
-  const [nameInput, setNameInput] = useState('');
-
-  const handleNameSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (nameInput.trim()) {
-      onNameChange(nameInput.trim());
-      onConfirmName(nameInput.trim());
-    }
-  };
-
+export function GameLobby({ onStartGame, loading }: GameLobbyProps) {
   return (
     <motion.div
       key="lobby"
@@ -63,50 +41,13 @@ export function GameLobby({
           </p>
         </div>
 
-        <div className="flex flex-col gap-4 sm:gap-6">
-          {!nameConfirmed ? (
-            <form onSubmit={handleNameSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-amac-blue uppercase tracking-widest px-1">
-                  Enter Your Name
-                </label>
-                <input
-                  required
-                  type="text"
-                  maxLength={30}
-                  placeholder="Your display name"
-                  value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  className="w-full sm:w-80 px-4 py-3 bg-white border border-amac-blue/10 focus:border-amac-blue/30 rounded-xl outline-none transition-all font-bold text-amac-dark"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={!nameInput.trim()}
-                className="group relative w-full sm:w-fit"
-              >
-                <div className="absolute -inset-1 bg-amac-red rounded-xl sm:rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative px-8 sm:px-12 py-4 sm:py-6 bg-amac-red text-white rounded-xl sm:rounded-2xl font-black text-xl sm:text-2xl flex items-center justify-center gap-4 hover:bg-amac-red/90 transition-all hover:translate-y-[-2px] active:translate-y-[1px] shadow-xl shadow-amac-red/20 disabled:opacity-50">
-                  <Play className="w-6 h-6 sm:w-8 sm:h-8 fill-current" />
-                  START CHALLENGE
-                </div>
-              </button>
-            </form>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-amac-blue">
-                Playing as <span className="text-amac-red">{playerName}</span>
-              </p>
-              <button onClick={onStartGame} disabled={loading} className="group relative w-full sm:w-fit">
-                <div className="absolute -inset-1 bg-amac-red rounded-xl sm:rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative px-8 sm:px-12 py-4 sm:py-6 bg-amac-red text-white rounded-xl sm:rounded-2xl font-black text-xl sm:text-2xl flex items-center justify-center gap-4 hover:bg-amac-red/90 transition-all hover:translate-y-[-2px] active:translate-y-[1px] shadow-xl shadow-amac-red/20">
-                  <Play className="w-6 h-6 sm:w-8 sm:h-8 fill-current" />
-                  {loading ? 'LOADING...' : 'START CHALLENGE'}
-                </div>
-              </button>
-            </div>
-          )}
-        </div>
+        <button onClick={onStartGame} disabled={loading} className="group relative w-full sm:w-fit">
+          <div className="absolute -inset-1 bg-amac-red rounded-xl sm:rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative px-8 sm:px-12 py-4 sm:py-6 bg-amac-red text-white rounded-xl sm:rounded-2xl font-black text-xl sm:text-2xl flex items-center justify-center gap-4 hover:bg-amac-red/90 transition-all hover:translate-y-[-2px] active:translate-y-[1px] shadow-xl shadow-amac-red/20">
+            <Play className="w-6 h-6 sm:w-8 sm:h-8 fill-current" />
+            {loading ? 'LOADING...' : 'START CHALLENGE'}
+          </div>
+        </button>
 
         <div className="grid grid-cols-3 gap-4 sm:gap-12 pt-8 sm:pt-12 border-t border-amac-blue/5">
           <div className="space-y-1">

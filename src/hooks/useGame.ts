@@ -10,10 +10,6 @@ export function useGame() {
   const { supabase } = useSupabaseContext();
   const { fetchQuestions, generateQuestions } = useQuestions();
 
-  // Player identity
-  const [playerName, setPlayerName] = useState('');
-  const [nameConfirmed, setNameConfirmed] = useState(false);
-
   // Game state
   const [gameState, setGameState] = useState<'lobby' | 'playing' | 'gameOver'>('lobby');
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -50,21 +46,17 @@ export function useGame() {
     audio.play().catch(() => {});
   };
 
-  const saveScore = async () => {
-    if (scoreSaved || !playerName || score === 0) return;
-    setScoreSaved(true);
+  const saveScoreWithName = async (name: string) => {
+    if (scoreSaved || score === 0) return;
     const { error } = await supabase.from('leaderboard').insert({
-      display_name: playerName,
+      display_name: name,
       score,
     });
     if (error) {
       console.error('Failed to save score:', error.message, error.details, error.hint);
+    } else {
+      setScoreSaved(true);
     }
-  };
-
-  const confirmName = (name: string) => {
-    setPlayerName(name.trim());
-    setNameConfirmed(true);
   };
 
   const startGame = async () => {
@@ -77,7 +69,6 @@ export function useGame() {
     setIsCorrect(null);
 
     try {
-      // Fetch one question per difficulty level (1-10)
       const allQuestions: Question[] = [];
       const asked: string[] = [];
 
@@ -115,7 +106,7 @@ export function useGame() {
     if (currentQuestionIndex + 1 < questions.length) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
-      endGame();
+      setGameState('gameOver');
     }
   };
 
@@ -163,29 +154,18 @@ export function useGame() {
     }
   };
 
-  const endGame = async () => {
-    setGameState('gameOver');
-    await saveScore();
-  };
-
   const goToLobby = () => {
     setGameState('lobby');
-    setNameConfirmed(false);
-    setPlayerName('');
     setContactCollected(false);
   };
 
   return {
-    // Player
-    playerName,
-    setPlayerName,
-    nameConfirmed,
-    confirmName,
     // Game state
     gameState,
     questions,
     currentQuestionIndex,
     score,
+    scoreSaved,
     difficulty: questions[currentQuestionIndex]?.difficulty ?? 1,
     loading,
     selectedAnswer,
@@ -202,6 +182,7 @@ export function useGame() {
     startGame,
     handleAnswer,
     handleContactSubmit,
+    saveScoreWithName,
     goToLobby,
   };
 }

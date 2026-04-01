@@ -20,10 +20,6 @@ function GameApp() {
         <AnimatePresence mode="wait">
           {game.gameState === 'lobby' && (
             <GameLobby
-              playerName={game.playerName}
-              nameConfirmed={game.nameConfirmed}
-              onNameChange={game.setPlayerName}
-              onConfirmName={game.confirmName}
               onStartGame={game.startGame}
               loading={game.loading}
             />
@@ -59,9 +55,10 @@ function GameApp() {
           {game.gameState === 'gameOver' && (
             <GameOver
               score={game.score}
-              playerName={game.playerName}
               onRestart={game.startGame}
               onGoToLobby={game.goToLobby}
+              onSaveScore={game.saveScoreWithName}
+              scoreSaved={game.scoreSaved}
             />
           )}
         </AnimatePresence>

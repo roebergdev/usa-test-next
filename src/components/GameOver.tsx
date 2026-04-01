@@ -1,17 +1,30 @@
 'use client';
 
+import { useState } from 'react';
 import { getRank } from '@/lib/constants';
 import { motion } from 'motion/react';
-import { Flag, Play } from 'lucide-react';
+import { Flag, Play, Trophy } from 'lucide-react';
 
 interface GameOverProps {
   score: number;
-  playerName: string;
   onRestart: () => void;
   onGoToLobby: () => void;
+  onSaveScore: (name: string) => Promise<void>;
+  scoreSaved: boolean;
 }
 
-export function GameOver({ score, playerName, onRestart, onGoToLobby }: GameOverProps) {
+export function GameOver({ score, onRestart, onGoToLobby, onSaveScore, scoreSaved }: GameOverProps) {
+  const [nameInput, setNameInput] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmitName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nameInput.trim() || saving) return;
+    setSaving(true);
+    await onSaveScore(nameInput.trim());
+    setSaving(false);
+  };
+
   return (
     <motion.div
       key="gameOver"
@@ -26,9 +39,6 @@ export function GameOver({ score, playerName, onRestart, onGoToLobby }: GameOver
         <h2 className="text-5xl sm:text-7xl font-black tracking-tighter uppercase text-amac-dark">
           Game Over
         </h2>
-        <p className="text-neutral-500 text-lg sm:text-xl font-medium">
-          Great effort, <span className="text-amac-blue font-bold">{playerName}</span>!
-        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -49,6 +59,42 @@ export function GameOver({ score, playerName, onRestart, onGoToLobby }: GameOver
           </div>
         </div>
       </div>
+
+      {/* Leaderboard name submission */}
+      {score > 0 && !scoreSaved && (
+        <div className="bg-white p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-amac-blue/5 shadow-xl shadow-amac-blue/5">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Trophy className="w-5 h-5 text-amac-blue" />
+            <span className="text-sm font-black text-amac-blue uppercase tracking-widest">
+              Join the Leaderboard
+            </span>
+          </div>
+          <form onSubmit={handleSubmitName} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <input
+              type="text"
+              maxLength={30}
+              placeholder="Enter your name"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              className="flex-1 px-4 py-3 bg-amac-gray border border-amac-blue/10 focus:border-amac-blue/30 rounded-xl outline-none transition-all font-bold text-amac-dark text-center sm:text-left"
+              required
+            />
+            <button
+              type="submit"
+              disabled={!nameInput.trim() || saving}
+              className="px-6 py-3 bg-amac-blue text-white rounded-xl font-black hover:bg-amac-blue/90 transition-all disabled:opacity-50"
+            >
+              {saving ? 'SAVING...' : 'SUBMIT'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {scoreSaved && (
+        <div className="text-sm font-bold text-green-600">
+          Score saved to the leaderboard!
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
         <button
