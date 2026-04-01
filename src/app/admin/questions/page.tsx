@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
-import { Plus, Pencil, Trash2, Search, Upload, X, Save, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Upload, X, Save, ChevronLeft, ChevronRight, FileUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface DBQuestion {
   id: string;
@@ -48,6 +48,15 @@ export default function QuestionsAdmin() {
   // Seed state
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState('');
+
+  // CSV upload state
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [csvRows, setCsvRows] = useState<Array<{
+    text: string; options: string[]; correct_answer: string; category: string; difficulty: number;
+  }>>([]);
+  const [csvErrors, setCsvErrors] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState('');
 
   const fetchQuestions = useCallback(async () => {
     setLoading(true);
@@ -165,6 +174,102 @@ export default function QuestionsAdmin() {
     }
   };
 
+  const parseCSV = (text: string) => {
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) {
+      setCsvErrors(['File is empty']);
+      return;
+    }
+
+    // Check if first line is a header
+    const firstLine = lines[0].toLowerCase();
+    const startIdx = firstLine.includes('text') || firstLine.includes('question') ? 1 : 0;
+
+    const parsed: typeof csvRows = [];
+    const errors: string[] = [];
+
+    for (let i = startIdx; i < lines.length; i++) {
+      const row = parseCSVLine(lines[i]);
+      if (row.length < 7) {
+        errors.push(`Row ${i + 1}: Expected at least 7 columns, got ${row.length}`);
+        continue;
+      }
+
+      const [text, optA, optB, optC, optD, correct_answer, category, diffStr] = row;
+      const difficulty = parseInt(diffStr) || 5;
+
+      if (!text) { errors.push(`Row ${i + 1}: Missing question text`); continue; }
+      if (!optA || !optB || !optC || !optD) { errors.push(`Row ${i + 1}: Missing one or more options`); continue; }
+      if (!correct_answer) { errors.push(`Row ${i + 1}: Missing correct answer`); continue; }
+
+      const options = [optA, optB, optC, optD];
+      if (!options.includes(correct_answer)) {
+        errors.push(`Row ${i + 1}: Correct answer "${correct_answer}" doesn't match any option`);
+        continue;
+      }
+
+      parsed.push({ text, options, correct_answer, category: category || 'History', difficulty: Math.min(10, Math.max(1, difficulty)) });
+    }
+
+    setCsvRows(parsed);
+    setCsvErrors(errors);
+  };
+
+  // Handle CSV fields with quoted commas
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+        else { inQuotes = !inQuotes; }
+      } else if (ch === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvRows([]);
+    setCsvErrors([]);
+    setUploadResult('');
+    const reader = new FileReader();
+    reader.onload = (ev) => parseCSV(ev.target?.result as string);
+    reader.readAsText(file);
+  };
+
+  const handleCSVUpload = async () => {
+    if (csvRows.length === 0) return;
+    setUploading(true);
+    setUploadResult('');
+    try {
+      const batchSize = 200;
+      let added = 0;
+      for (let i = 0; i < csvRows.length; i += batchSize) {
+        const batch = csvRows.slice(i, i + batchSize);
+        const { error } = await supabase.from('questions').insert(batch);
+        if (error) throw error;
+        added += batch.length;
+      }
+      setUploadResult(`Successfully uploaded ${added} questions!`);
+      setCsvRows([]);
+      fetchQuestions();
+    } catch (err) {
+      setUploadResult(`Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (
@@ -182,6 +287,13 @@ export default function QuestionsAdmin() {
           >
             <Upload className="w-4 h-4" />
             {seeding ? 'Seeding...' : 'Bulk Seed'}
+          </button>
+          <button
+            onClick={() => { setShowUploadModal(true); setCsvRows([]); setCsvErrors([]); setUploadResult(''); }}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            <FileUp className="w-4 h-4" />
+            Upload CSV
           </button>
           <button
             onClick={openCreate}
@@ -308,6 +420,124 @@ export default function QuestionsAdmin() {
           </div>
         )}
       </div>
+
+      {/* CSV Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-700">
+              <h2 className="text-lg font-semibold text-white">Upload Questions from CSV</h2>
+              <button onClick={() => setShowUploadModal(false)} className="text-gray-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-gray-700/50 rounded-lg p-4 text-sm text-gray-300">
+                <p className="font-medium text-white mb-2">Expected CSV format:</p>
+                <code className="block bg-gray-900 rounded p-3 text-xs text-gray-300 overflow-x-auto">
+                  text,option_a,option_b,option_c,option_d,correct_answer,category,difficulty
+                </code>
+                <ul className="mt-3 space-y-1 text-xs text-gray-400">
+                  <li>Header row is optional (auto-detected)</li>
+                  <li>correct_answer must exactly match one of the four options</li>
+                  <li>category examples: History, Geography, Government, Culture, Science</li>
+                  <li>difficulty: 1-10 (defaults to 5 if omitted)</li>
+                  <li>Fields containing commas should be wrapped in quotes</li>
+                </ul>
+              </div>
+
+              <div>
+                <input
+                  type="file"
+                  accept=".csv,.tsv,.txt"
+                  onChange={handleFileSelect}
+                  className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-amac-blue file:text-white hover:file:bg-amac-blue/90 file:cursor-pointer"
+                />
+              </div>
+
+              {csvErrors.length > 0 && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-red-400 text-sm font-medium mb-2">
+                    <AlertCircle className="w-4 h-4" />
+                    {csvErrors.length} row{csvErrors.length > 1 ? 's' : ''} had errors (skipped)
+                  </div>
+                  <div className="max-h-32 overflow-y-auto space-y-1">
+                    {csvErrors.map((err, i) => (
+                      <p key={i} className="text-xs text-red-300">{err}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {csvRows.length > 0 && (
+                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-green-400 text-sm font-medium mb-3">
+                    <CheckCircle2 className="w-4 h-4" />
+                    {csvRows.length} questions ready to upload
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-gray-400 border-b border-gray-600">
+                          <th className="text-left py-1 pr-2">#</th>
+                          <th className="text-left py-1 pr-2">Question</th>
+                          <th className="text-left py-1 pr-2">Category</th>
+                          <th className="text-left py-1">Diff</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {csvRows.slice(0, 20).map((row, i) => (
+                          <tr key={i} className="border-b border-gray-700/50">
+                            <td className="py-1.5 pr-2 text-gray-500">{i + 1}</td>
+                            <td className="py-1.5 pr-2 text-gray-200 truncate max-w-[300px]">{row.text}</td>
+                            <td className="py-1.5 pr-2 text-gray-400">{row.category}</td>
+                            <td className="py-1.5 text-gray-400">{row.difficulty}</td>
+                          </tr>
+                        ))}
+                        {csvRows.length > 20 && (
+                          <tr>
+                            <td colSpan={4} className="py-1.5 text-gray-500 text-center">
+                              ...and {csvRows.length - 20} more
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {uploadResult && (
+                <div className={`rounded-lg p-4 text-sm ${
+                  uploadResult.startsWith('Successfully')
+                    ? 'bg-green-500/10 border border-green-500/20 text-green-300'
+                    : 'bg-red-500/10 border border-red-500/20 text-red-300'
+                }`}>
+                  {uploadResult}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-700">
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="px-4 py-2 text-gray-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCSVUpload}
+                disabled={csvRows.length === 0 || uploading}
+                className="flex items-center gap-2 px-4 py-2 bg-amac-blue text-white rounded-lg hover:bg-amac-blue/90 transition-colors disabled:opacity-50"
+              >
+                <Upload className="w-4 h-4" />
+                {uploading ? 'Uploading...' : `Upload ${csvRows.length} Questions`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create/Edit Modal */}
       {showModal && (
