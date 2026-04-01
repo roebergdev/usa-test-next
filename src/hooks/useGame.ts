@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
 import { useQuestions } from '@/hooks/useQuestions';
 import { Question } from '@/lib/types';
@@ -26,15 +26,43 @@ export function useGame() {
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [contactCollected, setContactCollected] = useState(false);
 
+  // Use refs to avoid stale closures in setTimeout callbacks
+  const gameStateRef = useRef(gameState);
+  const currentQuestionIndexRef = useRef(currentQuestionIndex);
+  const questionsRef = useRef(questions);
+  const contactCollectedRef = useRef(contactCollected);
+
+  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+  useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
+  useEffect(() => { questionsRef.current = questions; }, [questions]);
+  useEffect(() => { contactCollectedRef.current = contactCollected; }, [contactCollected]);
+
   // Timer logic
   useEffect(() => {
-    if (gameState === 'playing' && timeLeft > 0 && selectedAnswer === null) {
+    if (gameState !== 'playing' || selectedAnswer !== null) return;
+
+    if (timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft((prev) => prev - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && gameState === 'playing' && selectedAnswer === null) {
-      handleAnswer('');
     }
-  }, [timeLeft, gameState, selectedAnswer]);
+
+    // Time's up — treat as wrong answer
+    setSelectedAnswer('');
+    setIsCorrect(false);
+    playSound(false);
+
+    const questionNumber = currentQuestionIndex + 1;
+    const timerId = setTimeout(() => {
+      if (gameStateRef.current !== 'playing') return;
+      if (questionNumber === CONTACT_FORM_TRIGGER && !contactCollectedRef.current) {
+        setShowContactForm(true);
+        return;
+      }
+      advance();
+    }, 1500);
+
+    return () => clearTimeout(timerId);
+  }, [timeLeft, gameState, selectedAnswer, currentQuestionIndex]);
 
   const playSound = (correct: boolean) => {
     const audio = new Audio(
@@ -45,6 +73,21 @@ export function useGame() {
     audio.volume = 0.5;
     audio.play().catch(() => {});
   };
+
+  const advance = useCallback(() => {
+    const idx = currentQuestionIndexRef.current;
+    const total = questionsRef.current.length;
+
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+
+    if (idx + 1 < total) {
+      setCurrentQuestionIndex(idx + 1);
+      setTimeLeft(TIMER_SECONDS);
+    } else {
+      setGameState('gameOver');
+    }
+  }, []);
 
   const saveScoreWithName = async (name: string) => {
     if (scoreSaved || score === 0) return;
@@ -98,22 +141,14 @@ export function useGame() {
     }
   };
 
-  const advanceOrEnd = () => {
-    setSelectedAnswer(null);
-    setIsCorrect(null);
-    setTimeLeft(TIMER_SECONDS);
+  const handleAnswer = (answer: string) => {
+    if (gameStateRef.current !== 'playing' || selectedAnswer !== null) return;
 
-    if (currentQuestionIndex + 1 < questions.length) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-    } else {
-      setGameState('gameOver');
-    }
-  };
+    const currentQ = questionsRef.current[currentQuestionIndexRef.current];
+    if (!currentQ) return;
 
-  const handleAnswer = async (answer: string) => {
-    setSelectedAnswer(answer);
-    const currentQ = questions[currentQuestionIndex];
     const correct = answer === currentQ.correctAnswer;
+    setSelectedAnswer(answer);
     setIsCorrect(correct);
     playSound(correct);
 
@@ -121,14 +156,15 @@ export function useGame() {
       setScore((prev) => prev + 1);
     }
 
-    const questionNumber = currentQuestionIndex + 1;
+    const questionNumber = currentQuestionIndexRef.current + 1;
 
     setTimeout(() => {
-      if (questionNumber === CONTACT_FORM_TRIGGER && !contactCollected) {
+      if (gameStateRef.current !== 'playing') return;
+      if (questionNumber === CONTACT_FORM_TRIGGER && !contactCollectedRef.current) {
         setShowContactForm(true);
         return;
       }
-      advanceOrEnd();
+      advance();
     }, 1500);
   };
 
@@ -145,7 +181,7 @@ export function useGame() {
       });
       setContactCollected(true);
       setShowContactForm(false);
-      advanceOrEnd();
+      advance();
     } catch (err) {
       console.error('Failed to save contact info', err);
       alert('Failed to save contact info. Please try again.');
@@ -160,7 +196,6 @@ export function useGame() {
   };
 
   return {
-    // Game state
     gameState,
     questions,
     currentQuestionIndex,
@@ -178,7 +213,6 @@ export function useGame() {
     setContactValue,
     isSubmittingContact,
     totalQuestions: questions.length,
-    // Actions
     startGame,
     handleAnswer,
     handleContactSubmit,
