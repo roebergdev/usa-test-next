@@ -14,6 +14,8 @@ interface GameBoardProps {
   isCorrect: boolean | null;
   loading: boolean;
   onAnswer: (answer: string) => void;
+  questionNumber: number;
+  totalQuestions: number;
 }
 
 export function GameBoard({
@@ -23,6 +25,8 @@ export function GameBoard({
   selectedAnswer,
   loading,
   onAnswer,
+  questionNumber,
+  totalQuestions,
 }: GameBoardProps) {
   return (
     <motion.div
@@ -49,6 +53,15 @@ export function GameBoard({
             </span>
             <span className="text-xl sm:text-2xl font-black tracking-tighter text-amac-blue">
               {score.toLocaleString()}
+            </span>
+          </div>
+          <div className="w-px h-8 sm:h-10 bg-amac-blue/10"></div>
+          <div className="flex flex-col">
+            <span className="text-[8px] sm:text-[10px] text-neutral-400 uppercase tracking-widest font-black mb-1">
+              Question
+            </span>
+            <span className="text-xl sm:text-2xl font-black tracking-tighter text-amac-dark">
+              {questionNumber}/{totalQuestions}
             </span>
           </div>
         </div>

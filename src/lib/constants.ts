@@ -20,6 +20,6 @@ export function getRank(score: number) {
   return { name: "Pioneer", level: 1, nextThreshold: 1000 };
 }
 
-export const TIMER_SECONDS = 15;
-export const QUESTIONS_PER_BATCH = 3;
+export const TIMER_SECONDS = 10;
+export const TOTAL_QUESTIONS = 10;
 export const CONTACT_FORM_TRIGGER = 5;

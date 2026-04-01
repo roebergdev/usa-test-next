@@ -51,6 +51,8 @@ function GameApp() {
                 isCorrect={game.isCorrect}
                 loading={game.loading}
                 onAnswer={game.handleAnswer}
+                questionNumber={game.currentQuestionIndex + 1}
+                totalQuestions={game.totalQuestions}
               />
             )}
 

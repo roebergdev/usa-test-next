@@ -3,7 +3,6 @@
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
 import { Question } from '@/lib/types';
 import { PREDEFINED_QUESTIONS } from '@/data/questions';
-import { QUESTIONS_PER_BATCH } from '@/lib/constants';
 
 function shuffleArray<T>(arr: T[]): T[] {
   const shuffled = [...arr];
@@ -19,16 +18,15 @@ export function useQuestions() {
 
   const fetchQuestions = async (
     difficulty: number,
-    count: number = QUESTIONS_PER_BATCH,
+    count: number = 1,
     excludeQuestions: string[] = []
   ): Promise<Question[]> => {
     try {
       const { data } = await supabase
         .from('questions')
         .select('*')
-        .gte('difficulty', difficulty - 1)
-        .lte('difficulty', difficulty + 1)
-        .limit(50);
+        .eq('difficulty', difficulty)
+        .limit(20);
 
       const allQuestions = (data || []).map((q) => ({
         id: q.id,
@@ -46,8 +44,7 @@ export function useQuestions() {
       if (filtered.length < count) {
         const localFallback = PREDEFINED_QUESTIONS.filter(
           (q) =>
-            q.difficulty >= difficulty - 1 &&
-            q.difficulty <= difficulty + 1 &&
+            q.difficulty === difficulty &&
             !excludeQuestions.includes(q.text)
         );
         const combined = [...filtered, ...localFallback];
@@ -59,8 +56,7 @@ export function useQuestions() {
       console.error('Error fetching questions:', error);
       const localFallback = PREDEFINED_QUESTIONS.filter(
         (q) =>
-          q.difficulty >= difficulty - 1 &&
-          q.difficulty <= difficulty + 1 &&
+          q.difficulty === difficulty &&
           !excludeQuestions.includes(q.text)
       );
       return shuffleArray(localFallback).slice(0, count);
@@ -69,7 +65,7 @@ export function useQuestions() {
 
   const generateQuestions = async (
     difficulty: number,
-    count: number = QUESTIONS_PER_BATCH,
+    count: number = 1,
     excludeQuestions: string[] = []
   ): Promise<Question[]> => {
     try {
@@ -84,8 +80,7 @@ export function useQuestions() {
       console.error('Failed to generate questions:', error);
       const localFallback = PREDEFINED_QUESTIONS.filter(
         (q) =>
-          q.difficulty >= difficulty - 1 &&
-          q.difficulty <= difficulty + 1 &&
+          q.difficulty === difficulty &&
           !excludeQuestions.includes(q.text)
       );
       return shuffleArray(localFallback).slice(0, count);

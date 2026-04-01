@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
 import { useQuestions } from '@/hooks/useQuestions';
 import { Question } from '@/lib/types';
-import { TIMER_SECONDS, CONTACT_FORM_TRIGGER, QUESTIONS_PER_BATCH } from '@/lib/constants';
+import { TIMER_SECONDS, CONTACT_FORM_TRIGGER, TOTAL_QUESTIONS } from '@/lib/constants';
 
 export function useGame() {
   const { supabase } = useSupabaseContext();
@@ -20,13 +20,10 @@ export function useGame() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [scoreSaved, setScoreSaved] = useState(false);
-  const [askedQuestions, setAskedQuestions] = useState<string[]>([]);
-  const [difficulty, setDifficulty] = useState(1);
   const [loading, setLoading] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
-  const [sessionQuestionCount, setSessionQuestionCount] = useState(0);
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactType, setContactType] = useState<'email' | 'phone'>('email');
   const [contactValue, setContactValue] = useState('');
@@ -74,25 +71,32 @@ export function useGame() {
     setLoading(true);
     setScore(0);
     setScoreSaved(false);
-    setAskedQuestions([]);
-    setDifficulty(1);
     setCurrentQuestionIndex(0);
-    setSessionQuestionCount(0);
     setShowContactForm(false);
     setSelectedAnswer(null);
     setIsCorrect(null);
 
     try {
-      let initialQuestions = await fetchQuestions(1, QUESTIONS_PER_BATCH, []);
-      if (initialQuestions.length === 0) {
-        initialQuestions = await generateQuestions(1, QUESTIONS_PER_BATCH, []);
+      // Fetch one question per difficulty level (1-10)
+      const allQuestions: Question[] = [];
+      const asked: string[] = [];
+
+      for (let diff = 1; diff <= TOTAL_QUESTIONS; diff++) {
+        let q = await fetchQuestions(diff, 1, asked);
+        if (q.length === 0) {
+          q = await generateQuestions(diff, 1, asked);
+        }
+        if (q.length > 0) {
+          allQuestions.push(q[0]);
+          asked.push(q[0].text);
+        }
       }
-      if (initialQuestions.length === 0) {
+
+      if (allQuestions.length === 0) {
         throw new Error('Could not load questions. Please try again.');
       }
 
-      setQuestions(initialQuestions);
-      setAskedQuestions(initialQuestions.map((q) => q.text));
+      setQuestions(allQuestions);
       setGameState('playing');
       setTimeLeft(TIMER_SECONDS);
     } catch (err) {
@@ -103,30 +107,7 @@ export function useGame() {
     }
   };
 
-  const fetchNextBatch = async (nextDifficulty: number, currentAsked: string[]) => {
-    setLoading(true);
-    try {
-      setDifficulty(nextDifficulty);
-      let nextQuestions = await fetchQuestions(nextDifficulty, QUESTIONS_PER_BATCH, currentAsked);
-      if (nextQuestions.length === 0) {
-        nextQuestions = await generateQuestions(nextDifficulty, QUESTIONS_PER_BATCH, currentAsked);
-      }
-      if (nextQuestions.length > 0) {
-        setQuestions(nextQuestions);
-        setAskedQuestions((prev) => [...prev, ...nextQuestions.map((q) => q.text)]);
-        setCurrentQuestionIndex(0);
-      } else {
-        endGame();
-      }
-    } catch (err) {
-      console.error('Failed to fetch more questions:', err);
-      endGame();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const advanceOrFetchNext = async () => {
+  const advanceOrEnd = () => {
     setSelectedAnswer(null);
     setIsCorrect(null);
     setTimeLeft(TIMER_SECONDS);
@@ -134,8 +115,7 @@ export function useGame() {
     if (currentQuestionIndex + 1 < questions.length) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
-      const nextDifficulty = Math.min(10, difficulty + 1);
-      await fetchNextBatch(nextDifficulty, askedQuestions);
+      endGame();
     }
   };
 
@@ -147,24 +127,18 @@ export function useGame() {
     playSound(correct);
 
     if (correct) {
-      setScore((prev) => prev + Math.floor(difficulty * 10));
-      const newSessionCount = sessionQuestionCount + 1;
-      setSessionQuestionCount(newSessionCount);
-
-      setTimeout(async () => {
-        if (newSessionCount === CONTACT_FORM_TRIGGER && !contactCollected) {
-          setShowContactForm(true);
-          return;
-        }
-        await advanceOrFetchNext();
-      }, 1500);
-    } else {
-      setTimeout(() => {
-        endGame();
-        setSelectedAnswer(null);
-        setIsCorrect(null);
-      }, 1500);
+      setScore((prev) => prev + Math.floor(currentQ.difficulty * 10));
     }
+
+    const questionNumber = currentQuestionIndex + 1;
+
+    setTimeout(() => {
+      if (questionNumber === CONTACT_FORM_TRIGGER && !contactCollected) {
+        setShowContactForm(true);
+        return;
+      }
+      advanceOrEnd();
+    }, 1500);
   };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
@@ -180,7 +154,7 @@ export function useGame() {
       });
       setContactCollected(true);
       setShowContactForm(false);
-      await advanceOrFetchNext();
+      advanceOrEnd();
     } catch (err) {
       console.error('Failed to save contact info', err);
       alert('Failed to save contact info. Please try again.');
@@ -212,7 +186,7 @@ export function useGame() {
     questions,
     currentQuestionIndex,
     score,
-    difficulty,
+    difficulty: questions[currentQuestionIndex]?.difficulty ?? 1,
     loading,
     selectedAnswer,
     isCorrect,
@@ -223,6 +197,7 @@ export function useGame() {
     contactValue,
     setContactValue,
     isSubmittingContact,
+    totalQuestions: questions.length,
     // Actions
     startGame,
     handleAnswer,
