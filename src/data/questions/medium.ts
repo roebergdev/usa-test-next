@@ -83,7 +83,6 @@ export const mediumQuestions = [
   { text: "How many U.S. Senators are there?", options: ["50", "100", "435", "538"], correctAnswer: "100", category: "Government", difficulty: 5 },
   { text: "Who wrote the 'Star-Spangled Banner'?", options: ["Francis Scott Key", "John Philip Sousa", "Irving Berlin", "Woody Guthrie"], correctAnswer: "Francis Scott Key", category: "Culture", difficulty: 5 },
   { text: "Which state has the most electoral votes?", options: ["Texas", "Florida", "New York", "California"], correctAnswer: "California", category: "Government", difficulty: 5 },
-  { text: "What is the name of the current Vice President?", options: ["Mike Pence", "Joe Biden", "Kamala Harris", "Dick Cheney"], correctAnswer: "Kamala Harris", category: "Government", difficulty: 5 },
   { text: "Which amendment gave women the right to vote?", options: ["15th", "18th", "19th", "21st"], correctAnswer: "19th", category: "History", difficulty: 5 },
   { text: "What is the largest national park in the contiguous U.S.?", options: ["Yellowstone", "Yosemite", "Death Valley", "Grand Canyon"], correctAnswer: "Death Valley", category: "Geography", difficulty: 5 },
   { text: "Who signs bills to become laws?", options: ["The President", "The Vice President", "The Speaker of the House", "The Chief Justice"], correctAnswer: "The President", category: "Government", difficulty: 5 },
