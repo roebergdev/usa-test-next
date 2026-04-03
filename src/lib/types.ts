@@ -1,3 +1,5 @@
+export type QuizMode = 'daily' | 'practice';
+
 export interface Question {
   id: string;
   text: string;

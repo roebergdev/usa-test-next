@@ -22,4 +22,5 @@ export function getRank(score: number) {
 
 export const TIMER_SECONDS = 10;
 export const TOTAL_QUESTIONS = 10;
+export const DAILY_QUIZ_QUESTIONS = 5;
 export const CONTACT_FORM_TRIGGER = 5;

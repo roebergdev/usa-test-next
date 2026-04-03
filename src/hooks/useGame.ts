@@ -94,6 +94,7 @@ export function useGame() {
     const { error } = await supabase.from('leaderboard').insert({
       display_name: name,
       score,
+      mode: 'practice',
     });
     if (error) {
       console.error('Failed to save score:', error.message, error.details, error.hint);

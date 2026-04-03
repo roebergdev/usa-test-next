@@ -2,18 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
-import { LeaderboardEntry } from '@/lib/types';
+import { LeaderboardEntry, QuizMode } from '@/lib/types';
 
-export function useLeaderboard() {
+export function useLeaderboard(mode?: QuizMode) {
   const { supabase } = useSupabaseContext();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   const fetchLeaderboard = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('leaderboard')
       .select('*')
       .order('score', { ascending: false })
       .limit(10);
+    if (mode) {
+      query = query.eq('mode', mode);
+    }
+    const { data } = await query;
     if (data) setLeaderboard(data as LeaderboardEntry[]);
   };
 
@@ -21,7 +25,7 @@ export function useLeaderboard() {
     fetchLeaderboard();
 
     const channel = supabase
-      .channel('leaderboard-changes')
+      .channel(`leaderboard-changes-${mode ?? 'all'}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'leaderboard' },
@@ -34,7 +38,7 @@ export function useLeaderboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [mode]);
 
   return { leaderboard };
 }

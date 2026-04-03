@@ -2,11 +2,16 @@
 
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { getRank } from '@/lib/constants';
+import { QuizMode } from '@/lib/types';
 import { Trophy, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 
-export function Leaderboard() {
-  const { leaderboard } = useLeaderboard();
+interface LeaderboardProps {
+  mode?: QuizMode;
+}
+
+export function Leaderboard({ mode }: LeaderboardProps) {
+  const { leaderboard } = useLeaderboard(mode);
 
   return (
     <div className="bg-white border border-amac-blue/5 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 shadow-2xl shadow-amac-blue/5 relative overflow-hidden group">
@@ -22,7 +27,7 @@ export function Leaderboard() {
           </h3>
         </div>
         <div className="px-3 py-1 bg-amac-gray rounded-full text-[8px] sm:text-[10px] text-neutral-400 font-bold uppercase tracking-widest">
-          Global
+          {mode === 'daily' ? 'Daily' : mode === 'practice' ? 'Practice' : 'Global'}
         </div>
       </div>
 
