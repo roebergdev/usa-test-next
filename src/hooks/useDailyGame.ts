@@ -14,6 +14,7 @@ import {
   getTodayString,
   type DailyResult,
 } from '@/lib/daily';
+import { buildDisplayName, stripPhone } from '@/lib/capture';
 
 export function useDailyGame() {
   const { supabase } = useSupabaseContext();
@@ -148,20 +149,45 @@ export function useDailyGame() {
   const saveDailyContact = async (
     firstName: string,
     lastInitial: string,
-    phone: string
+    phone: string,
+    smsConsent: boolean
   ) => {
     if (scoreSaved) return;
-    const displayName = `${firstName.trim()} ${lastInitial.trim().charAt(0).toUpperCase()}.`;
+
+    const displayName = buildDisplayName(firstName, lastInitial);
+    const digits = stripPhone(phone);
 
     const [lbResult] = await Promise.all([
       supabase.from('leaderboard').insert({ display_name: displayName, score, mode: 'daily' }),
-      supabase.from('leads').insert({ name: displayName, phone, type: 'phone', score }),
+      supabase.from('leads').insert({
+        name: displayName,
+        phone: digits,
+        type: 'phone',
+        score,
+        sms_consent: smsConsent,
+      }),
     ]);
 
     if (lbResult.error) {
       console.error('Failed to save daily score:', lbResult.error.message);
-    } else {
-      setScoreSaved(true);
+      return;
+    }
+
+    setScoreSaved(true);
+
+    // Fire-and-forget SMS notification — non-blocking
+    if (smsConsent) {
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: digits,
+          firstName: firstName.trim(),
+          score,
+          totalQuestions: questionsRef.current.length,
+          streak: getStreak(),
+        }),
+      }).catch(() => {});
     }
   };
 

@@ -3,6 +3,17 @@
 import { useState } from 'react';
 import { getRank } from '@/lib/constants';
 import { QuizMode } from '@/lib/types';
+import {
+  type CaptureFormData,
+  type CaptureErrors,
+  validateCapture,
+  hasErrors,
+  normalizeFirstName,
+  normalizeLastInitial,
+  formatPhoneDisplay,
+  buildDisplayName,
+  SMS_CONSENT_TEXT,
+} from '@/lib/capture';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Flag,
@@ -14,7 +25,10 @@ import {
   ChevronRight,
   Dumbbell,
   Star,
+  MessageSquare,
 } from 'lucide-react';
+
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface GameOverProps {
   score: number;
@@ -23,45 +37,80 @@ interface GameOverProps {
   onRestart?: () => void;
   onGoToLobby: () => void;
   onPlayPractice?: () => void;
-  /** Practice mode: simple name save */
+  /** Practice mode — simple name entry */
   onSaveScore?: (name: string) => Promise<void>;
-  /** Daily mode: full contact capture */
+  /** Daily mode — full contact capture */
   onSaveDailyContact?: (
     firstName: string,
     lastInitial: string,
-    phone: string
+    phone: string,
+    smsConsent: boolean
   ) => Promise<void>;
   scoreSaved: boolean;
   playerName?: string;
   streak?: number;
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function getReinforcement(score: number, total: number): string {
   const pct = score / total;
   if (pct === 1) return "Perfect score — you're a true American patriot!";
   if (pct >= 0.8) return 'Excellent — you really know your American history!';
-  if (pct >= 0.6) return 'Good effort — you\'re well above average.';
+  if (pct >= 0.6) return "Good effort — you're well above average.";
   if (pct >= 0.4) return 'A solid start — every quiz makes you sharper.';
   return 'Keep going — every patriot starts somewhere.';
 }
 
 function getRankEstimate(score: number, total: number): string {
   const pct = score / total;
-  if (pct === 1) return 'Top 5% of today\'s players';
-  if (pct >= 0.8) return 'Top 20% of today\'s players';
-  if (pct >= 0.6) return 'Top 45% of today\'s players';
-  if (pct >= 0.4) return 'Top 65% of today\'s players';
+  if (pct === 1) return "Top 5% of today's players";
+  if (pct >= 0.8) return "Top 20% of today's players";
+  if (pct >= 0.6) return "Top 45% of today's players";
+  if (pct >= 0.4) return "Top 65% of today's players";
   return 'Keep practicing to climb the ranks';
 }
 
-function formatPhone(raw: string): string {
-  const digits = raw.replace(/\D/g, '').slice(0, 10);
-  if (digits.length < 4) return digits;
-  if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
-  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+// ─── Field component ──────────────────────────────────────────────────────────
+
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-[10px] font-black text-neutral-400 uppercase tracking-[0.18em] block">
+        {label}
+      </label>
+      {children}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="text-[11px] text-amac-red font-bold"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
-// ─── Daily Results Screen ─────────────────────────────────────────────────────
+const inputCls = (hasError: boolean) =>
+  `w-full px-4 py-3 bg-amac-gray border rounded-xl outline-none font-bold text-amac-dark text-sm transition-all ` +
+  (hasError
+    ? 'border-amac-red focus:border-amac-red'
+    : 'border-amac-blue/10 focus:border-amac-blue/40');
+
+// ─── Daily Results ────────────────────────────────────────────────────────────
 
 function DailyResults({
   score,
@@ -76,14 +125,19 @@ function DailyResults({
   totalQuestions: number;
   streak: number;
   scoreSaved: boolean;
-  onSaveDailyContact?: (f: string, l: string, p: string) => Promise<void>;
+  onSaveDailyContact?: (f: string, l: string, p: string, c: boolean) => Promise<void>;
   onPlayPractice?: () => void;
   onGoToLobby: () => void;
 }) {
   const [showCapture, setShowCapture] = useState(false);
-  const [firstName, setFirstName] = useState('');
-  const [lastInitial, setLastInitial] = useState('');
-  const [phone, setPhone] = useState('');
+  const [form, setForm] = useState<CaptureFormData>({
+    firstName: '',
+    lastInitial: '',
+    phone: '',
+    smsConsent: false,
+  });
+  const [errors, setErrors] = useState<CaptureErrors>({});
+  const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -92,16 +146,26 @@ function DailyResults({
     day: 'numeric',
   });
 
-  const previewName =
-    firstName.trim()
-      ? `${firstName.trim()} ${lastInitial.trim().charAt(0).toUpperCase() || '_'}.`
-      : null;
+  // Update a field and re-validate live after first submission attempt
+  const updateField = <K extends keyof CaptureFormData>(key: K, value: CaptureFormData[K]) => {
+    const next = { ...form, [key]: value };
+    setForm(next);
+    if (submitted) setErrors(validateCapture(next));
+  };
+
+  const previewName = form.firstName.trim()
+    ? buildDisplayName(form.firstName, form.lastInitial || '_')
+    : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName.trim() || !lastInitial.trim() || phone.replace(/\D/g, '').length < 10 || saving) return;
+    setSubmitted(true);
+    const errs = validateCapture(form);
+    setErrors(errs);
+    if (hasErrors(errs) || saving) return;
+
     setSaving(true);
-    await onSaveDailyContact?.(firstName, lastInitial, phone.replace(/\D/g, ''));
+    await onSaveDailyContact?.(form.firstName, form.lastInitial, form.phone, form.smsConsent);
     setSaving(false);
   };
 
@@ -124,12 +188,15 @@ function DailyResults({
         </div>
       </div>
 
-      {/* Score + streak cards */}
+      {/* Score + streak */}
       <div className={`grid gap-3 sm:gap-4 ${streak > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-amac-blue/5 shadow-lg shadow-amac-blue/5 p-6 sm:p-8 text-center">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-1">Today&apos;s Score</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-1">
+            Today&apos;s Score
+          </p>
           <p className="text-5xl sm:text-6xl font-black tracking-tighter text-amac-blue leading-none">
-            {score}<span className="text-2xl sm:text-3xl text-neutral-300">/{totalQuestions}</span>
+            {score}
+            <span className="text-2xl sm:text-3xl text-neutral-300">/{totalQuestions}</span>
           </p>
           <p className="text-xs sm:text-sm font-medium text-neutral-500 mt-2 leading-snug">
             {getReinforcement(score, totalQuestions)}
@@ -138,7 +205,9 @@ function DailyResults({
 
         {streak > 1 && (
           <div className="bg-orange-50 rounded-2xl sm:rounded-3xl border border-orange-200 shadow-lg shadow-orange-100 p-6 sm:p-8 text-center">
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-400 mb-1">Streak</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-400 mb-1">
+              Streak
+            </p>
             <div className="flex items-center justify-center gap-1.5">
               <Flame className="w-7 h-7 sm:w-9 sm:h-9 text-orange-500" />
               <span className="text-5xl sm:text-6xl font-black tracking-tighter text-orange-500 leading-none">
@@ -150,7 +219,7 @@ function DailyResults({
         )}
       </div>
 
-      {/* Rank estimate chip */}
+      {/* Rank chip */}
       <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-amac-blue/10 rounded-full w-fit mx-auto shadow-sm">
         <Star className="w-3.5 h-3.5 text-amac-blue" />
         <span className="text-xs font-black text-amac-blue">{getRankEstimate(score, totalQuestions)}</span>
@@ -160,20 +229,28 @@ function DailyResults({
       {/* CTA area */}
       <AnimatePresence mode="wait">
         {scoreSaved ? (
-          /* ── Success state ── */
+          /* ── Success screen ─────────────────────────────────────────────── */
           <motion.div
-            key="saved"
-            initial={{ opacity: 0, y: 8 }}
+            key="success"
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-3"
+            className="bg-white border border-amac-blue/5 rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-xl shadow-amac-blue/5 text-center space-y-4"
           >
-            <div className="flex items-center justify-center gap-2.5 p-4 bg-green-50 border border-green-200 rounded-2xl">
-              <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-              <span className="text-sm font-black text-green-700">
-                Score saved! You&apos;re on the leaderboard.
-              </span>
+            <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-7 h-7 text-green-600" />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="space-y-1">
+              <h3 className="text-3xl sm:text-4xl font-black tracking-tighter text-amac-dark">
+                You&apos;re in.
+              </h3>
+              <p className="text-sm sm:text-base font-bold text-neutral-500">
+                We saved your score.
+              </p>
+              <p className="text-sm sm:text-base font-medium text-neutral-400">
+                Come back tomorrow to keep the streak alive.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               {onPlayPractice && (
                 <button
                   onClick={onPlayPractice}
@@ -193,13 +270,14 @@ function DailyResults({
             </div>
           </motion.div>
         ) : showCapture ? (
-          /* ── Capture form ── */
+          /* ── Capture form ────────────────────────────────────────────────── */
           <motion.div
             key="capture"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-amac-blue/10 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xl shadow-amac-blue/5 space-y-5"
+            className="bg-white border border-amac-blue/10 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-xl shadow-amac-blue/5 space-y-5"
           >
+            {/* Form header */}
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <Trophy className="w-4 h-4 text-amac-blue" />
@@ -207,64 +285,69 @@ function DailyResults({
               </div>
               {previewName && (
                 <p className="text-sm text-neutral-400 font-medium">
-                  Your leaderboard name:{' '}
+                  Leaderboard name:{' '}
                   <span className="font-black text-amac-dark">{previewName}</span>
                 </p>
               )}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              {/* Name row */}
               <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">
-                    First Name
-                  </label>
+                <Field label="First Name" error={errors.firstName} >
                   <input
                     type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    autoComplete="given-name"
                     placeholder="John"
                     maxLength={30}
-                    required
-                    className="w-full px-3.5 py-3 bg-amac-gray border border-amac-blue/10 focus:border-amac-blue/40 rounded-xl outline-none font-bold text-amac-dark text-sm transition-all"
+                    value={form.firstName}
+                    onChange={(e) =>
+                      updateField('firstName', normalizeFirstName(e.target.value) || e.target.value)
+                    }
+                    onBlur={(e) =>
+                      updateField('firstName', normalizeFirstName(e.target.value))
+                    }
+                    className={`${inputCls(!!errors.firstName)} flex-1`}
                   />
-                </div>
-                <div className="w-20">
-                  <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">
-                    Last Initial
-                  </label>
+                </Field>
+
+                <Field label="Last Initial" error={errors.lastInitial}>
                   <input
                     type="text"
-                    value={lastInitial}
-                    onChange={(e) => setLastInitial(e.target.value.charAt(0))}
-                    placeholder="D"
+                    autoComplete="off"
+                    placeholder="S"
                     maxLength={1}
-                    required
-                    className="w-full px-3.5 py-3 bg-amac-gray border border-amac-blue/10 focus:border-amac-blue/40 rounded-xl outline-none font-bold text-amac-dark text-sm text-center transition-all"
+                    value={form.lastInitial}
+                    onChange={(e) =>
+                      updateField('lastInitial', normalizeLastInitial(e.target.value))
+                    }
+                    className={`${inputCls(!!errors.lastInitial)} w-16 text-center`}
                   />
-                </div>
+                </Field>
               </div>
 
-              <div>
-                <label className="text-[10px] font-black text-neutral-400 uppercase tracking-widest block mb-1">
-                  Phone Number
-                </label>
+              {/* Phone */}
+              <Field label="Phone Number" error={errors.phone}>
                 <input
                   type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(formatPhone(e.target.value))}
+                  autoComplete="tel"
                   placeholder="(555) 000-0000"
-                  required
-                  className="w-full px-3.5 py-3 bg-amac-gray border border-amac-blue/10 focus:border-amac-blue/40 rounded-xl outline-none font-bold text-amac-dark text-sm transition-all"
+                  value={form.phone}
+                  onChange={(e) =>
+                    updateField('phone', formatPhoneDisplay(e.target.value))
+                  }
+                  className={inputCls(!!errors.phone)}
                 />
-              </div>
+              </Field>
 
-              {/* Value props */}
-              <ul className="space-y-1.5 pt-1">
+              {/* Benefits */}
+              <ul className="space-y-1.5 py-1">
                 {[
-                  'Your score appears on today\'s leaderboard',
-                  streak > 1 ? `Your ${streak}-day streak stays protected` : 'Start building your daily streak',
-                  'Get a daily text reminder to keep your streak going',
+                  'Save your place on today\'s leaderboard',
+                  streak > 1
+                    ? `Keep your ${streak}-day streak alive`
+                    : 'Start building your daily streak',
+                  "Get tomorrow's USA Test by text",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-xs text-neutral-600 font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amac-blue shrink-0 mt-0.5" />
@@ -273,15 +356,62 @@ function DailyResults({
                 ))}
               </ul>
 
+              {/* SMS consent */}
+              <div className="space-y-1">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <div className="relative mt-0.5 shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={form.smsConsent}
+                      onChange={(e) => updateField('smsConsent', e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                        form.smsConsent
+                          ? 'bg-amac-blue border-amac-blue'
+                          : errors.smsConsent
+                          ? 'border-amac-red bg-white'
+                          : 'border-neutral-300 bg-white group-hover:border-amac-blue/50'
+                      }`}
+                    >
+                      {form.smsConsent && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12">
+                          <path
+                            d="M2 6l3 3 5-5"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-neutral-500 leading-relaxed font-medium">
+                    <MessageSquare className="w-3 h-3 inline-block mr-1 text-amac-blue" />
+                    {SMS_CONSENT_TEXT}
+                  </span>
+                </label>
+                <AnimatePresence>
+                  {errors.smsConsent && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="text-[11px] text-amac-red font-bold pl-8"
+                    >
+                      {errors.smsConsent}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Submit */}
               <button
                 type="submit"
-                disabled={
-                  !firstName.trim() ||
-                  !lastInitial.trim() ||
-                  phone.replace(/\D/g, '').length < 10 ||
-                  saving
-                }
-                className="w-full py-4 bg-amac-red text-white rounded-xl font-black text-base flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all disabled:opacity-40 shadow-lg shadow-amac-red/20 active:scale-[0.98]"
+                disabled={saving}
+                className="w-full py-4 bg-amac-red text-white rounded-xl font-black text-base flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all disabled:opacity-50 shadow-lg shadow-amac-red/20 active:scale-[0.98]"
               >
                 {saving ? 'Saving...' : 'Save My Score'}
                 {!saving && <ChevronRight className="w-4 h-4" />}
@@ -290,14 +420,18 @@ function DailyResults({
 
             <button
               type="button"
-              onClick={() => setShowCapture(false)}
-              className="w-full text-center text-xs text-neutral-400 hover:text-neutral-600 font-bold transition-colors pt-1"
+              onClick={() => {
+                setShowCapture(false);
+                setSubmitted(false);
+                setErrors({});
+              }}
+              className="w-full text-center text-xs text-neutral-400 hover:text-neutral-600 font-bold transition-colors"
             >
               Cancel
             </button>
           </motion.div>
         ) : (
-          /* ── Default CTAs ── */
+          /* ── Default CTAs ──────────────────────────────────────────────── */
           <motion.div
             key="ctas"
             initial={{ opacity: 0, y: 8 }}
@@ -344,7 +478,7 @@ function DailyResults({
   );
 }
 
-// ─── Practice Results Screen ──────────────────────────────────────────────────
+// ─── Practice Results ─────────────────────────────────────────────────────────
 
 function PracticeResults({
   score,
@@ -463,7 +597,7 @@ function PracticeResults({
   );
 }
 
-// ─── Exported Component ───────────────────────────────────────────────────────
+// ─── Exported component ───────────────────────────────────────────────────────
 
 export function GameOver({
   score,
