@@ -9,7 +9,7 @@ import { HomeScreen } from '@/components/HomeScreen';
 import { GameBoard } from '@/components/GameBoard';
 import { GameOver } from '@/components/GameOver';
 import { ContactForm } from '@/components/ContactForm';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 
 type AppScreen = 'home' | 'daily' | 'practice';
 
@@ -23,13 +23,52 @@ function DailyGameApp({
 }) {
   const game = useDailyGame();
 
-  // Start game immediately on mount if not already played
-  if (game.gameState === 'idle' && !game.alreadyPlayed) {
+  // Start game on mount if not already played.
+  // startGame() has an internal hasPlayedToday() guard — safe to always call.
+  // Runs in useEffect to avoid state updates during render.
+  useEffect(() => {
     game.startGame();
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <AnimatePresence mode="wait">
+      {/* State: loading / transitioning */}
+      {game.gameState === 'idle' && (
+        <div key="daily-loading" className="flex items-center justify-center py-32">
+          <div className="w-8 h-8 border-4 border-amac-blue border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* State 4: content unavailable fallback */}
+      {game.gameState === 'playing' && game.questions.length === 0 && (
+        <motion.div
+          key="daily-unavailable"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-xl mx-auto text-center py-16 sm:py-24 space-y-6"
+        >
+          <div className="w-14 h-14 bg-neutral-100 rounded-2xl flex items-center justify-center mx-auto">
+            <span className="text-2xl">📡</span>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-2xl font-black tracking-tight text-amac-dark">
+              Today&apos;s quiz isn&apos;t ready yet
+            </h3>
+            <p className="text-neutral-500 font-medium text-sm max-w-xs mx-auto">
+              We&apos;re having trouble loading today&apos;s questions. Try again in a moment.
+            </p>
+          </div>
+          <button
+            onClick={onBack}
+            className="px-8 py-3 bg-amac-gray text-neutral-600 rounded-xl font-black text-sm hover:bg-neutral-200 transition-all"
+          >
+            Go Home
+          </button>
+        </motion.div>
+      )}
+
+      {/* State 1 / active game */}
       {game.gameState === 'playing' && game.questions.length > 0 && (
         <GameBoard
           key="daily-board"
@@ -46,6 +85,7 @@ function DailyGameApp({
         />
       )}
 
+      {/* States 2 + 3: completed (unsaved or saved) */}
       {game.gameState === 'gameOver' && (
         <GameOver
           key="daily-over"

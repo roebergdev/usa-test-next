@@ -9,6 +9,8 @@ import {
   getDailyResult,
   saveDailyResultLocal,
   hasPlayedToday,
+  hasSavedScore,
+  markScoreSaved,
   getStreak,
   getOrCreateSessionId,
   getTodayString,
@@ -41,12 +43,19 @@ export function useDailyGame() {
   useEffect(() => { questionsRef.current = questions; }, [questions]);
   useEffect(() => { scoreRef.current = score; }, [score]);
 
-  // Check for existing daily play on mount
+  // Restore state from localStorage on mount.
+  // If the user already completed today's quiz, jump straight to 'gameOver'
+  // so DailyGameApp immediately shows the results/save screen.
   useEffect(() => {
     const result = getDailyResult();
     if (result) {
-      setAlreadyPlayed(result);
+      const qs = getDailyQuestions(); // deterministic — same result for today's seed
+      setQuestions(qs);
+      setScore(result.score);
+      setScoreSaved(hasSavedScore());
       setStreak(getStreak());
+      setAlreadyPlayed(result);
+      setGameState('gameOver');
     }
   }, []);
 
@@ -174,6 +183,7 @@ export function useDailyGame() {
     }
 
     setScoreSaved(true);
+    markScoreSaved(); // persist across page reloads
 
     // Fire-and-forget SMS notification — non-blocking
     if (smsConsent) {

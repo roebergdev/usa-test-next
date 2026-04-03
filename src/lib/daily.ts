@@ -2,6 +2,7 @@ import { Question } from './types';
 import { PREDEFINED_QUESTIONS } from '@/data/questions';
 
 export const DAILY_STORAGE_PREFIX = 'usa_test_daily_';
+export const SCORE_SAVED_PREFIX = 'usa_test_score_saved_';
 export const SESSION_ID_KEY = 'usa_test_session_id';
 
 // Difficulty curve for the 5-question daily quiz:
@@ -140,6 +141,18 @@ export function getYesterdayStreak(): number {
     else break;
   }
   return streak;
+}
+
+/** Returns true if the user saved their named score to the leaderboard today. Persists across reloads. */
+export function hasSavedScore(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(SCORE_SAVED_PREFIX + getTodayString()) === '1';
+}
+
+/** Called after a successful leaderboard save so the flag survives page reloads. */
+export function markScoreSaved(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(SCORE_SAVED_PREFIX + getTodayString(), '1');
 }
 
 export function getOrCreateSessionId(): string {

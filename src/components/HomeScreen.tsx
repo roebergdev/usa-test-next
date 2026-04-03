@@ -12,11 +12,13 @@ import {
   Trophy,
   ChevronRight,
   Zap,
+  Star,
 } from 'lucide-react';
 import {
   getDailyResult,
   getStreak,
   getYesterdayStreak,
+  hasSavedScore,
   type DailyResult,
 } from '@/lib/daily';
 import { DAILY_QUIZ_QUESTIONS } from '@/lib/constants';
@@ -43,9 +45,11 @@ interface HomeScreenProps {
 
 function DailyQuizHero({
   dailyResult,
+  scoreSaved,
   onPlayDaily,
 }: {
   dailyResult: DailyResult | null;
+  scoreSaved: boolean;
   onPlayDaily: () => void;
 }) {
   const today = new Date().toLocaleDateString('en-US', {
@@ -56,19 +60,16 @@ function DailyQuizHero({
 
   return (
     <div className="relative bg-white border border-amac-blue/5 rounded-3xl sm:rounded-[2.5rem] p-7 sm:p-12 shadow-2xl shadow-amac-blue/5 overflow-hidden">
-      {/* Background glow */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-amac-blue/8 via-amac-red/4 to-transparent rounded-full blur-[80px] pointer-events-none" />
 
       <div className="relative space-y-5 sm:space-y-7">
         {/* Badge + date */}
-        <div className="flex items-start justify-between flex-wrap gap-3">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amac-blue/5 border border-amac-blue/10 rounded-full text-[9px] sm:text-[10px] text-amac-blue font-black uppercase tracking-[0.2em]">
-              <CalendarDays className="w-3 h-3" />
-              Daily Challenge
-            </div>
-            <p className="text-sm text-neutral-400 font-medium pl-1">{today}</p>
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amac-blue/5 border border-amac-blue/10 rounded-full text-[9px] sm:text-[10px] text-amac-blue font-black uppercase tracking-[0.2em]">
+            <CalendarDays className="w-3 h-3" />
+            Daily Challenge
           </div>
+          <p className="text-sm text-neutral-400 font-medium pl-1">{today}</p>
         </div>
 
         {/* Headline */}
@@ -84,23 +85,8 @@ function DailyQuizHero({
           </p>
         </div>
 
-        {dailyResult ? (
-          /* Already played */
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-2xl">
-              <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-              <div>
-                <div className="text-sm font-black text-green-700">
-                  You scored {dailyResult.score}/{dailyResult.totalQuestions} today
-                </div>
-                <div className="text-xs text-green-600 font-medium">
-                  Come back tomorrow for a new challenge
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Ready to play */
+        {/* State 1: not played */}
+        {!dailyResult && (
           <button onClick={onPlayDaily} className="group relative w-full sm:w-fit">
             <div className="absolute -inset-1 bg-amac-red rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500" />
             <div className="relative px-8 sm:px-14 py-4 sm:py-5 bg-amac-red text-white rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl flex items-center justify-center gap-3 hover:bg-amac-red/90 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-xl shadow-amac-red/25">
@@ -109,6 +95,45 @@ function DailyQuizHero({
               <ChevronRight className="w-4 h-4 opacity-70" />
             </div>
           </button>
+        )}
+
+        {/* State 2: played but score not saved */}
+        {dailyResult && !scoreSaved && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 p-4 bg-amac-blue/5 border border-amac-blue/10 rounded-2xl">
+              <CheckCircle2 className="w-5 h-5 text-amac-blue shrink-0" />
+              <div>
+                <div className="text-sm font-black text-amac-dark">
+                  You scored {dailyResult.score}/{dailyResult.totalQuestions} today
+                </div>
+                <div className="text-xs text-neutral-500 font-medium">
+                  Your score isn&apos;t on the leaderboard yet
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={onPlayDaily}
+              className="w-full sm:w-fit px-8 py-3.5 bg-amac-red text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all active:scale-[0.98] shadow-lg shadow-amac-red/20"
+            >
+              <Trophy className="w-4 h-4" />
+              Save My Score
+            </button>
+          </div>
+        )}
+
+        {/* State 3: played and score saved */}
+        {dailyResult && scoreSaved && (
+          <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-2xl">
+            <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+            <div>
+              <div className="text-sm font-black text-green-700">
+                Score saved — {dailyResult.score}/{dailyResult.totalQuestions} on the leaderboard
+              </div>
+              <div className="text-xs text-green-600 font-medium">
+                Come back tomorrow for a new challenge
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -324,12 +349,14 @@ function PracticeRow({ onPlayPractice }: { onPlayPractice: () => void }) {
 
 export function HomeScreen({ onPlayDaily, onPlayPractice }: HomeScreenProps) {
   const [dailyResult, setDailyResult] = useState<DailyResult | null>(null);
+  const [scoreSaved, setScoreSaved] = useState(false);
   const [streak, setStreak] = useState(0);
   const [atRiskStreak, setAtRiskStreak] = useState(0);
 
   useEffect(() => {
     const result = getDailyResult();
     setDailyResult(result);
+    setScoreSaved(hasSavedScore());
     setStreak(getStreak());
     setAtRiskStreak(getYesterdayStreak());
   }, []);
@@ -345,7 +372,7 @@ export function HomeScreen({ onPlayDaily, onPlayPractice }: HomeScreenProps) {
       className="max-w-2xl mx-auto space-y-4"
     >
       {/* 1 — Daily Quiz (dominant) */}
-      <DailyQuizHero dailyResult={dailyResult} onPlayDaily={onPlayDaily} />
+      <DailyQuizHero dailyResult={dailyResult} scoreSaved={scoreSaved} onPlayDaily={onPlayDaily} />
 
       {/* 2 — Secondary: streak + leaderboard preview */}
       <div className="grid sm:grid-cols-2 gap-4">
