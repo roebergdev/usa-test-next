@@ -77,9 +77,9 @@ function DailyQuizHero({
         {/* Headline */}
         <div className="space-y-2">
           <h2 className="text-4xl sm:text-6xl font-black tracking-tighter leading-[0.9] uppercase text-amac-dark">
-            How American{' '}
+            Prove your{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amac-blue to-amac-red">
-              Are You?
+              Patriotism.
             </span>
           </h2>
           <p className="text-neutral-500 font-medium text-sm sm:text-base max-w-md">
