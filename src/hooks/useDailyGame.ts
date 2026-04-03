@@ -58,17 +58,10 @@ export function useDailyGame() {
       return () => clearTimeout(timer);
     }
 
-    // Time's up — wrong answer, advance
+    // Time's up — show wrong answer state; user must click Continue
     setSelectedAnswer('');
     setIsCorrect(false);
     playSound(false);
-
-    const timerId = setTimeout(() => {
-      if (gameStateRef.current !== 'playing') return;
-      advanceOrEnd(scoreRef.current);
-    }, 1500);
-
-    return () => clearTimeout(timerId);
   }, [timeLeft, gameState, selectedAnswer]);
 
   const playSound = (correct: boolean) => {
@@ -144,12 +137,13 @@ export function useDailyGame() {
     setIsCorrect(correct);
     playSound(correct);
     if (correct) setScore(newScore);
-
-    setTimeout(() => {
-      if (gameStateRef.current !== 'playing') return;
-      advanceOrEnd(newScore);
-    }, 1500);
+    // User must click Continue to advance
   };
+
+  const continueToNext = useCallback(() => {
+    if (gameStateRef.current !== 'playing') return;
+    advanceOrEnd(scoreRef.current);
+  }, [advanceOrEnd]);
 
   const saveScoreWithName = async (name: string) => {
     if (scoreSaved) return;
@@ -179,6 +173,7 @@ export function useDailyGame() {
     streak,
     startGame,
     handleAnswer,
+    continueToNext,
     saveScoreWithName,
   };
 }

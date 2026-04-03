@@ -34,6 +34,7 @@ function DailyGameApp({ onBack }: { onBack: () => void }) {
           isCorrect={game.isCorrect}
           loading={false}
           onAnswer={game.handleAnswer}
+          onContinue={game.continueToNext}
           questionNumber={game.currentQuestionIndex + 1}
           totalQuestions={game.totalQuestions}
         />
@@ -94,6 +95,7 @@ function PracticeGameApp({ onBack }: { onBack: () => void }) {
             isCorrect={game.isCorrect}
             loading={game.loading}
             onAnswer={game.handleAnswer}
+            onContinue={game.continueToNext}
             questionNumber={game.currentQuestionIndex + 1}
             totalQuestions={game.totalQuestions}
           />

@@ -4,8 +4,9 @@ import { PREDEFINED_QUESTIONS } from '@/data/questions';
 export const DAILY_STORAGE_PREFIX = 'usa_test_daily_';
 export const SESSION_ID_KEY = 'usa_test_session_id';
 
-// Difficulties sampled for the daily quiz (5 questions, spread across the spectrum)
-const DAILY_DIFFICULTIES = [2, 4, 6, 8, 10] as const;
+// Difficulty curve for the 5-question daily quiz:
+// Q1-2: easy (1, 2), Q3-4: medium (4, 5), Q5: hard (7)
+const DAILY_DIFFICULTIES = [1, 2, 4, 5, 7] as const;
 
 export function getTodayString(): string {
   const now = new Date();

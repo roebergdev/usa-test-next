@@ -1,10 +1,9 @@
 'use client';
 
 import { Question } from '@/lib/types';
-import { getRank } from '@/lib/constants';
 import { Timer } from '@/components/Timer';
-import { motion } from 'motion/react';
-import { Flag, CheckCircle2, XCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
 
 interface GameBoardProps {
   question: Question;
@@ -14,8 +13,15 @@ interface GameBoardProps {
   isCorrect: boolean | null;
   loading: boolean;
   onAnswer: (answer: string) => void;
+  onContinue: () => void;
   questionNumber: number;
   totalQuestions: number;
+}
+
+function getDifficultyLabel(difficulty: number): { label: string; cls: string } {
+  if (difficulty <= 2) return { label: 'Easy', cls: 'text-green-700 bg-green-50 border-green-200' };
+  if (difficulty <= 5) return { label: 'Medium', cls: 'text-amber-700 bg-amber-50 border-amber-200' };
+  return { label: 'Hard', cls: 'text-red-700 bg-red-50 border-red-200' };
 }
 
 export function GameBoard({
@@ -23,115 +29,175 @@ export function GameBoard({
   score,
   timeLeft,
   selectedAnswer,
+  isCorrect,
   loading,
   onAnswer,
+  onContinue,
   questionNumber,
   totalQuestions,
 }: GameBoardProps) {
+  const answered = selectedAnswer !== null;
+  const timedOut = answered && selectedAnswer === '';
+  const diff = getDifficultyLabel(question.difficulty);
+
   return (
     <motion.div
       key="playing"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="max-w-3xl mx-auto space-y-6 sm:space-y-12"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-2xl mx-auto space-y-4 sm:space-y-5"
     >
-      {/* Score bar */}
-      <div className="flex items-center justify-between bg-white p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] border border-amac-blue/5 shadow-xl shadow-amac-blue/5 backdrop-blur-xl">
-        <div className="flex items-center gap-4 sm:gap-8">
-          <div className="flex flex-col">
-            <span className="text-[8px] sm:text-[10px] text-neutral-400 uppercase tracking-widest font-black mb-1">
-              Rank
-            </span>
-            <span className="text-xl sm:text-2xl font-black tracking-tighter text-amac-dark">
-              {getRank(score).name}
-            </span>
-          </div>
-          <div className="w-px h-8 sm:h-10 bg-amac-blue/10"></div>
-          <div className="flex flex-col">
-            <span className="text-[8px] sm:text-[10px] text-amac-blue uppercase tracking-widest font-black mb-1">
-              Score
-            </span>
-            <span className="text-xl sm:text-2xl font-black tracking-tighter text-amac-blue">
-              {score.toLocaleString()}
-            </span>
-          </div>
-          <div className="w-px h-8 sm:h-10 bg-amac-blue/10"></div>
-          <div className="flex flex-col">
-            <span className="text-[8px] sm:text-[10px] text-neutral-400 uppercase tracking-widest font-black mb-1">
-              Question
-            </span>
-            <span className="text-xl sm:text-2xl font-black tracking-tighter text-amac-dark">
-              {questionNumber}/{totalQuestions}
-            </span>
-          </div>
+      {/* Progress row */}
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex-1 flex items-center gap-1.5">
+          {Array.from({ length: totalQuestions }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+                i < questionNumber - 1
+                  ? 'bg-amac-blue'
+                  : i === questionNumber - 1
+                  ? 'bg-amac-blue/35'
+                  : 'bg-neutral-200'
+              }`}
+            />
+          ))}
         </div>
-
+        <span className="text-[10px] sm:text-xs font-black text-neutral-400 uppercase tracking-widest whitespace-nowrap">
+          Question {questionNumber} of {totalQuestions}
+        </span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-amac-blue/10 rounded-full shadow-sm">
+          <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Score</span>
+          <span className="text-xs font-black text-amac-blue">{score}</span>
+        </div>
         <Timer timeLeft={timeLeft} />
       </div>
 
-      {/* Question */}
-      <div className="space-y-4 sm:space-y-8">
-        <div className="p-6 sm:p-12 bg-white border border-amac-blue/5 rounded-3xl sm:rounded-[3rem] relative overflow-hidden shadow-2xl shadow-amac-blue/5">
-          <div className="absolute top-0 right-0 p-4 sm:p-8 opacity-[0.03] text-amac-blue">
-            <Flag className="w-32 h-32 sm:w-48 sm:h-48" />
-          </div>
-          <div className="relative space-y-3 sm:space-y-4">
-            <div className="inline-block px-3 py-1 bg-amac-blue/5 rounded-full text-[8px] sm:text-[10px] text-amac-blue font-black uppercase tracking-[0.3em]">
-              {question.category}
-            </div>
-            <h3 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight sm:leading-[1.1] text-amac-dark">
-              {question.text}
-            </h3>
-          </div>
+      {/* Question card */}
+      <motion.div
+        key={question.id}
+        initial={{ opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="bg-white border border-amac-blue/5 rounded-3xl p-6 sm:p-10 shadow-xl shadow-amac-blue/5"
+      >
+        <div className="flex items-center gap-2 mb-4 sm:mb-5 flex-wrap">
+          <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${diff.cls}`}>
+            {diff.label}
+          </span>
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 px-2.5 py-1 bg-neutral-50 border border-neutral-200 rounded-full">
+            {question.category}
+          </span>
         </div>
+        <h3 className="text-xl sm:text-3xl font-black tracking-tight leading-snug text-amac-dark">
+          {question.text}
+        </h3>
+      </motion.div>
 
-        {/* Answer options */}
-        <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
-          {question.options.map((option, i) => {
-            const isSelected = selectedAnswer === option;
-            const isCorrectOption = option === question.correctAnswer;
+      {/* Answer grid */}
+      <div className="grid sm:grid-cols-2 gap-2.5 sm:gap-3">
+        {question.options.map((option, i) => {
+          const isSelected = selectedAnswer === option;
+          const isCorrectOption = option === question.correctAnswer;
 
-            let bgClass =
-              'bg-white border-amac-blue/5 hover:border-amac-blue/50 hover:bg-amac-gray';
-            if (selectedAnswer) {
-              if (isCorrectOption)
-                bgClass = 'bg-amac-blue/10 border-amac-blue text-amac-blue';
-              else if (isSelected)
-                bgClass = 'bg-amac-red/10 border-amac-red text-amac-red';
-              else bgClass = 'bg-white border-amac-blue/5 opacity-30';
-            }
+          let cls =
+            'bg-white border-neutral-200 hover:border-amac-blue/40 hover:bg-amac-gray/60 active:scale-[0.98] cursor-pointer';
+          if (answered) {
+            if (isCorrectOption)
+              cls = 'bg-amac-blue/8 border-amac-blue cursor-default';
+            else if (isSelected)
+              cls = 'bg-amac-red/8 border-amac-red cursor-default';
+            else
+              cls = 'bg-white border-neutral-100 opacity-35 cursor-default';
+          }
 
-            return (
-              <motion.button
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                disabled={!!selectedAnswer}
-                onClick={() => onAnswer(option)}
-                className={`w-full p-4 sm:p-6 rounded-xl sm:rounded-[1.5rem] border text-left font-bold text-base sm:text-lg transition-all flex items-center justify-between group shadow-sm ${bgClass}`}
+          return (
+            <motion.button
+              key={i}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+              disabled={answered}
+              onClick={() => onAnswer(option)}
+              className={`w-full min-h-[64px] sm:min-h-[72px] p-4 sm:p-5 rounded-2xl border-2 text-left font-bold text-sm sm:text-base transition-all flex items-center gap-3 sm:gap-4 ${cls}`}
+            >
+              <span
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0 transition-colors ${
+                  answered && isCorrectOption
+                    ? 'bg-amac-blue text-white'
+                    : answered && isSelected && !isCorrectOption
+                    ? 'bg-amac-red text-white'
+                    : 'bg-neutral-100 text-neutral-400'
+                }`}
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <span className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-amac-gray flex items-center justify-center text-[10px] sm:text-xs font-black text-neutral-400 group-hover:bg-amac-blue/10 group-hover:text-amac-blue transition-all">
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                  <span className="flex-1">{option}</span>
-                </div>
-                {selectedAnswer && isCorrectOption && (
-                  <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-amac-blue shrink-0" />
-                )}
-                {selectedAnswer && isSelected && !isCorrectOption && (
-                  <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amac-red shrink-0" />
-                )}
-              </motion.button>
-            );
-          })}
-        </div>
+                {String.fromCharCode(65 + i)}
+              </span>
+              <span className="flex-1 leading-snug">{option}</span>
+              {answered && isCorrectOption && (
+                <CheckCircle2 className="w-5 h-5 text-amac-blue shrink-0" />
+              )}
+              {answered && isSelected && !isCorrectOption && (
+                <XCircle className="w-5 h-5 text-amac-red shrink-0" />
+              )}
+            </motion.button>
+          );
+        })}
       </div>
 
+      {/* Feedback + Continue */}
+      <AnimatePresence>
+        {answered && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            className={`rounded-2xl border p-4 sm:p-6 space-y-4 ${
+              isCorrect
+                ? 'bg-green-50 border-green-200'
+                : 'bg-red-50 border-red-200'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {isCorrect ? (
+                <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className={`font-black text-sm sm:text-base ${isCorrect ? 'text-green-700' : 'text-red-600'}`}>
+                  {timedOut ? "Time's up!" : isCorrect ? 'Correct!' : 'Incorrect'}
+                </p>
+                {!isCorrect && (
+                  <p className="text-sm text-red-600 font-medium mt-0.5">
+                    Correct answer:{' '}
+                    <span className="font-black">{question.correctAnswer}</span>
+                  </p>
+                )}
+                {question.explanation && (
+                  <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
+                    {question.explanation}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={onContinue}
+              className={`w-full py-3 sm:py-4 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-sm ${
+                isCorrect
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'bg-amac-red hover:bg-amac-red/90 text-white'
+              }`}
+            >
+              {questionNumber < totalQuestions ? 'Next Question' : 'See Results'}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {loading && (
-        <div className="flex justify-center pt-4 sm:pt-8">
-          <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-amac-blue border-t-transparent rounded-full animate-spin"></div>
+        <div className="flex justify-center pt-2">
+          <div className="w-6 h-6 border-4 border-amac-blue border-t-transparent rounded-full animate-spin" />
         </div>
       )}
     </motion.div>

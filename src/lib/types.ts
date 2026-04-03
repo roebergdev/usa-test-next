@@ -7,6 +7,7 @@ export interface Question {
   correctAnswer: string;
   difficulty: number; // 1 to 10
   category: string;
+  explanation?: string;
 }
 
 export interface LeaderboardEntry {

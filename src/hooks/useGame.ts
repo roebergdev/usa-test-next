@@ -46,22 +46,10 @@ export function useGame() {
       return () => clearTimeout(timer);
     }
 
-    // Time's up — treat as wrong answer
+    // Time's up — show wrong answer state; user must click Continue
     setSelectedAnswer('');
     setIsCorrect(false);
     playSound(false);
-
-    const questionNumber = currentQuestionIndex + 1;
-    const timerId = setTimeout(() => {
-      if (gameStateRef.current !== 'playing') return;
-      if (questionNumber === CONTACT_FORM_TRIGGER && !contactCollectedRef.current) {
-        setShowContactForm(true);
-        return;
-      }
-      advance();
-    }, 1500);
-
-    return () => clearTimeout(timerId);
   }, [timeLeft, gameState, selectedAnswer, currentQuestionIndex]);
 
   const playSound = (correct: boolean) => {
@@ -161,18 +149,18 @@ export function useGame() {
     if (correct) {
       setScore((prev) => prev + 1);
     }
-
-    const questionNumber = currentQuestionIndexRef.current + 1;
-
-    setTimeout(() => {
-      if (gameStateRef.current !== 'playing') return;
-      if (questionNumber === CONTACT_FORM_TRIGGER && !contactCollectedRef.current) {
-        setShowContactForm(true);
-        return;
-      }
-      advance();
-    }, 1500);
+    // User must click Continue to advance
   };
+
+  const continueToNext = useCallback(() => {
+    if (gameStateRef.current !== 'playing') return;
+    const questionNumber = currentQuestionIndexRef.current + 1;
+    if (questionNumber === CONTACT_FORM_TRIGGER && !contactCollectedRef.current) {
+      setShowContactForm(true);
+      return;
+    }
+    advance();
+  }, [advance]);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,6 +211,7 @@ export function useGame() {
     totalQuestions: questions.length,
     startGame,
     handleAnswer,
+    continueToNext,
     handleContactSubmit,
     saveScoreWithName,
     goToLobby,
