@@ -19,9 +19,11 @@ import {
   getStreak,
   getYesterdayStreak,
   hasSavedScore,
+  getTodayString,
   type DailyResult,
 } from '@/lib/daily';
 import { DAILY_QUIZ_QUESTIONS } from '@/lib/constants';
+import { track } from '@/lib/analytics';
 
 // ─── Placeholder leaderboard rows ─────────────────────────────────────────────
 // Shown only when there are no real entries yet.
@@ -67,7 +69,7 @@ function DailyQuizHero({
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amac-blue/5 border border-amac-blue/10 rounded-full text-[9px] sm:text-[10px] text-amac-blue font-black uppercase tracking-[0.2em]">
             <CalendarDays className="w-3 h-3" />
-            Daily Challenge
+            Today&apos;s Quiz
           </div>
           <p className="text-sm text-neutral-400 font-medium pl-1">{today}</p>
         </div>
@@ -75,13 +77,13 @@ function DailyQuizHero({
         {/* Headline */}
         <div className="space-y-2">
           <h2 className="text-4xl sm:text-6xl font-black tracking-tighter leading-[0.9] uppercase text-amac-dark">
-            Prove your{' '}
+            How American{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amac-blue to-amac-red">
-              Patriotism.
+              Are You?
             </span>
           </h2>
           <p className="text-neutral-500 font-medium text-sm sm:text-base max-w-md">
-            {DAILY_QUIZ_QUESTIONS} questions &middot; 10 seconds each &middot; Same quiz for everyone today
+            {DAILY_QUIZ_QUESTIONS} questions &middot; ~2 minutes &middot; Same quiz for every American today
           </p>
         </div>
 
@@ -91,7 +93,7 @@ function DailyQuizHero({
             <div className="absolute -inset-1 bg-amac-red rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500" />
             <div className="relative px-8 sm:px-14 py-4 sm:py-5 bg-amac-red text-white rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl flex items-center justify-center gap-3 hover:bg-amac-red/90 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-xl shadow-amac-red/25">
               <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
-              Play Today&apos;s Quiz
+              Take Today&apos;s Quiz
               <ChevronRight className="w-4 h-4 opacity-70" />
             </div>
           </button>
@@ -107,7 +109,7 @@ function DailyQuizHero({
                   You scored {dailyResult.score}/{dailyResult.totalQuestions} today
                 </div>
                 <div className="text-xs text-neutral-500 font-medium">
-                  Your score isn&apos;t on the leaderboard yet
+                  Put your name on the leaderboard
                 </div>
               </div>
             </div>
@@ -116,7 +118,7 @@ function DailyQuizHero({
               className="w-full sm:w-fit px-8 py-3.5 bg-amac-red text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all active:scale-[0.98] shadow-lg shadow-amac-red/20"
             >
               <Trophy className="w-4 h-4" />
-              Save My Score
+              Claim My Spot
             </button>
           </div>
         )}
@@ -127,10 +129,10 @@ function DailyQuizHero({
             <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
             <div>
               <div className="text-sm font-black text-green-700">
-                Score saved — {dailyResult.score}/{dailyResult.totalQuestions} on the leaderboard
+                {dailyResult.score}/{dailyResult.totalQuestions} — you&apos;re on the board
               </div>
               <div className="text-xs text-green-600 font-medium">
-                Come back tomorrow for a new challenge
+                New quiz drops tomorrow. Don&apos;t break the streak.
               </div>
             </div>
           </div>
@@ -167,7 +169,7 @@ function StreakCard({
             <span className="text-lg sm:text-xl font-black text-orange-400 ml-1">days</span>
           </div>
           <p className="text-xs sm:text-sm font-medium text-orange-600 mt-1.5">
-            Impressive! See you tomorrow to keep it going.
+            Keep it going — come back tomorrow.
           </p>
         </div>
       </div>
@@ -187,7 +189,7 @@ function StreakCard({
             Day 1
           </div>
           <p className="text-xs sm:text-sm font-medium text-amac-blue/70 mt-1.5">
-            Come back tomorrow to grow your streak!
+            Show up tomorrow to make it a habit.
           </p>
         </div>
       </div>
@@ -208,7 +210,7 @@ function StreakCard({
             <span className="text-lg sm:text-xl font-black text-amber-500 ml-1">days</span>
           </div>
           <p className="text-xs sm:text-sm font-medium text-amber-700">
-            Play today before midnight to protect it!
+            Play today or lose your streak.
           </p>
         </div>
         <button
@@ -234,7 +236,7 @@ function StreakCard({
           —
         </div>
         <p className="text-xs sm:text-sm font-medium text-neutral-400 mt-1.5">
-          Play today to start your streak!
+          Play daily to build your streak.
         </p>
       </div>
     </div>
@@ -252,6 +254,10 @@ function LeaderboardPreview({
 }) {
   const { leaderboard } = useLeaderboard('daily');
 
+  useEffect(() => {
+    track('leaderboard_viewed', { quiz_mode: 'daily', date: getTodayString() });
+  }, []);
+
   const isPlaceholder = leaderboard.length === 0;
   const rows = isPlaceholder
     ? PLACEHOLDER_ROWS
@@ -265,7 +271,7 @@ function LeaderboardPreview({
           <Trophy className="w-3.5 h-3.5 text-yellow-500" />
         </div>
         <span className="font-black text-sm uppercase tracking-widest text-amac-dark">
-          Top Patriots
+          Today&apos;s Leaderboard
         </span>
         {isPlaceholder && (
           <span className="text-[9px] font-bold text-neutral-300 uppercase tracking-widest ml-auto">
@@ -301,14 +307,14 @@ function LeaderboardPreview({
         {playedToday ? (
           <p className="text-[11px] font-bold text-green-600 text-center flex items-center justify-center gap-1">
             <CheckCircle2 className="w-3 h-3" />
-            You played today — check the leaderboard!
+            You&apos;re on the board today.
           </p>
         ) : (
           <button
             onClick={onPlayDaily}
             className="w-full text-center text-[11px] font-black text-amac-blue hover:text-amac-blue/70 transition-colors flex items-center justify-center gap-1"
           >
-            Play today to join the leaderboard
+            Play to get on the leaderboard
             <ChevronRight className="w-3 h-3" />
           </button>
         )}
@@ -335,7 +341,7 @@ function PracticeRow({ onPlayPractice }: { onPlayPractice: () => void }) {
               Practice Mode
             </div>
             <div className="text-xs text-neutral-400 font-medium">
-              10 questions &middot; Unlimited plays &middot; Randomized
+              10 questions &middot; Randomized &middot; No streak pressure
             </div>
           </div>
         </div>
@@ -355,10 +361,19 @@ export function HomeScreen({ onPlayDaily, onPlayPractice }: HomeScreenProps) {
 
   useEffect(() => {
     const result = getDailyResult();
+    const saved = hasSavedScore();
+    const streakCount = getStreak();
     setDailyResult(result);
-    setScoreSaved(hasSavedScore());
-    setStreak(getStreak());
+    setScoreSaved(saved);
+    setStreak(streakCount);
     setAtRiskStreak(getYesterdayStreak());
+
+    track('home_viewed', {
+      quiz_mode: 'daily',
+      has_saved_score: saved,
+      streak_count: streakCount,
+      date: getTodayString(),
+    });
   }, []);
 
   const playedToday = dailyResult !== null;

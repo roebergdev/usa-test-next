@@ -17,6 +17,7 @@ import {
   type DailyResult,
 } from '@/lib/daily';
 import { buildDisplayName, stripPhone } from '@/lib/capture';
+import { track } from '@/lib/analytics';
 
 export function useDailyGame() {
   const { supabase } = useSupabaseContext();
@@ -87,8 +88,18 @@ export function useDailyGame() {
   const persistResult = useCallback(
     (finalScore: number, totalQuestions: number) => {
       saveDailyResultLocal(finalScore, totalQuestions);
+      const streakCount = getStreak();
       setAlreadyPlayed({ date: getTodayString(), score: finalScore, totalQuestions });
-      setStreak(getStreak());
+      setStreak(streakCount);
+
+      track('daily_quiz_completed', {
+        quiz_mode: 'daily',
+        score: finalScore,
+        question_count: totalQuestions,
+        streak_count: streakCount,
+        date: getTodayString(),
+      });
+
       supabase
         .from('daily_results')
         .insert({
@@ -133,6 +144,13 @@ export function useDailyGame() {
     setIsCorrect(null);
     setTimeLeft(TIMER_SECONDS);
     setGameState('playing');
+
+    track('daily_quiz_started', {
+      quiz_mode: 'daily',
+      question_count: qs.length,
+      streak_count: getStreak(),
+      date: getTodayString(),
+    });
   };
 
   const handleAnswer = (answer: string) => {
@@ -184,6 +202,13 @@ export function useDailyGame() {
 
     setScoreSaved(true);
     markScoreSaved(); // persist across page reloads
+
+    track('user_info_submitted', {
+      quiz_mode: 'daily',
+      score,
+      streak_count: getStreak(),
+      date: getTodayString(),
+    });
 
     // Fire-and-forget SMS notification — non-blocking
     if (smsConsent) {

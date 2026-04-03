@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { getRank } from '@/lib/constants';
 import { QuizMode } from '@/lib/types';
+import { track } from '@/lib/analytics';
 import {
   type CaptureFormData,
   type CaptureErrors,
@@ -55,20 +56,20 @@ interface GameOverProps {
 
 function getReinforcement(score: number, total: number): string {
   const pct = score / total;
-  if (pct === 1) return "Perfect score — you're a true American patriot!";
-  if (pct >= 0.8) return 'Excellent — you really know your American history!';
-  if (pct >= 0.6) return "Good effort — you're well above average.";
-  if (pct >= 0.4) return 'A solid start — every quiz makes you sharper.';
-  return 'Keep going — every patriot starts somewhere.';
+  if (pct === 1) return 'Perfect. You know your country.';
+  if (pct >= 0.8) return 'Strong score — most Americans miss a few of those.';
+  if (pct >= 0.6) return 'Above average. Keep showing up and it shows.';
+  if (pct >= 0.4) return 'Not bad — come back tomorrow and beat it.';
+  return 'Every streak starts somewhere. See you tomorrow.';
 }
 
 function getRankEstimate(score: number, total: number): string {
   const pct = score / total;
-  if (pct === 1) return "Top 5% of today's players";
-  if (pct >= 0.8) return "Top 20% of today's players";
-  if (pct >= 0.6) return "Top 45% of today's players";
-  if (pct >= 0.4) return "Top 65% of today's players";
-  return 'Keep practicing to climb the ranks';
+  if (pct === 1) return "Top 5% today";
+  if (pct >= 0.8) return "Top 20% today";
+  if (pct >= 0.6) return "Top 45% today";
+  if (pct >= 0.4) return "Top 65% today";
+  return 'Keep playing to climb the ranks';
 }
 
 // ─── Field component ──────────────────────────────────────────────────────────
@@ -182,7 +183,7 @@ function DailyResults({
         </div>
         <div>
           <h2 className="text-3xl sm:text-5xl font-black tracking-tighter uppercase text-amac-dark leading-none">
-            Challenge Complete!
+            Quiz Complete!
           </h2>
           <p className="text-neutral-400 font-medium text-sm mt-1.5">{today}</p>
         </div>
@@ -214,7 +215,7 @@ function DailyResults({
                 {streak}
               </span>
             </div>
-            <p className="text-xs sm:text-sm font-medium text-orange-500 mt-2">days in a row</p>
+            <p className="text-xs sm:text-sm font-medium text-orange-500 mt-2">day streak</p>
           </div>
         )}
       </div>
@@ -241,13 +242,13 @@ function DailyResults({
             </div>
             <div className="space-y-1">
               <h3 className="text-3xl sm:text-4xl font-black tracking-tighter text-amac-dark">
-                You&apos;re in.
+                You&apos;re on the board.
               </h3>
               <p className="text-sm sm:text-base font-bold text-neutral-500">
-                We saved your score.
+                Score saved. See you tomorrow.
               </p>
               <p className="text-sm sm:text-base font-medium text-neutral-400">
-                Come back tomorrow to keep the streak alive.
+                New quiz drops daily — keep the streak alive.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -281,7 +282,7 @@ function DailyResults({
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <Trophy className="w-4 h-4 text-amac-blue" />
-                <h3 className="font-black text-amac-dark text-base sm:text-lg">Save Your Score</h3>
+                <h3 className="font-black text-amac-dark text-base sm:text-lg">Get on the Leaderboard</h3>
               </div>
               {previewName && (
                 <p className="text-sm text-neutral-400 font-medium">
@@ -343,11 +344,11 @@ function DailyResults({
               {/* Benefits */}
               <ul className="space-y-1.5 py-1">
                 {[
-                  'Save your place on today\'s leaderboard',
+                  "Your name goes on today's national leaderboard",
                   streak > 1
-                    ? `Keep your ${streak}-day streak alive`
-                    : 'Start building your daily streak',
-                  "Get tomorrow's USA Test by text",
+                    ? `Protect your ${streak}-day streak`
+                    : 'Start a daily streak — show up tomorrow',
+                  "Get a heads-up text when tomorrow's quiz drops",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-xs text-neutral-600 font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amac-blue shrink-0 mt-0.5" />
@@ -363,7 +364,13 @@ function DailyResults({
                     <input
                       type="checkbox"
                       checked={form.smsConsent}
-                      onChange={(e) => updateField('smsConsent', e.target.checked)}
+                      onChange={(e) => {
+                        updateField('smsConsent', e.target.checked);
+                        track('sms_consent_checked', {
+                          quiz_mode: 'daily',
+                          checked: e.target.checked,
+                        });
+                      }}
                       className="sr-only"
                     />
                     <div
@@ -413,7 +420,7 @@ function DailyResults({
                 disabled={saving}
                 className="w-full py-4 bg-amac-red text-white rounded-xl font-black text-base flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all disabled:opacity-50 shadow-lg shadow-amac-red/20 active:scale-[0.98]"
               >
-                {saving ? 'Saving...' : 'Save My Score'}
+                {saving ? 'Saving...' : 'Claim My Spot'}
                 {!saving && <ChevronRight className="w-4 h-4" />}
               </button>
             </form>
@@ -439,13 +446,21 @@ function DailyResults({
             className="space-y-3"
           >
             <button
-              onClick={() => setShowCapture(true)}
+              onClick={() => {
+                setShowCapture(true);
+                track('save_score_clicked', {
+                  quiz_mode: 'daily',
+                  score,
+                  question_count: totalQuestions,
+                  streak_count: streak,
+                });
+              }}
               className="group relative w-full"
             >
               <div className="absolute -inset-0.5 bg-amac-red rounded-2xl blur opacity-20 group-hover:opacity-35 transition duration-500" />
               <div className="relative w-full py-4 sm:py-5 bg-amac-red text-white rounded-xl font-black text-base sm:text-lg flex items-center justify-center gap-2.5 hover:bg-amac-red/90 transition-all shadow-xl shadow-amac-red/20 active:scale-[0.98]">
                 <Trophy className="w-5 h-5" />
-                Save My Score
+                Claim My Spot
               </div>
             </button>
 
@@ -472,7 +487,7 @@ function DailyResults({
       </AnimatePresence>
 
       <p className="text-center text-xs text-neutral-400 font-medium">
-        Come back tomorrow for a new daily challenge!
+        New quiz every day — same time, different questions.
       </p>
     </motion.div>
   );
@@ -547,7 +562,7 @@ function PracticeResults({
           <div className="flex items-center justify-center gap-2 mb-4">
             <Trophy className="w-5 h-5 text-amac-blue" />
             <span className="text-sm font-black text-amac-blue uppercase tracking-widest">
-              Join the Leaderboard
+              Save Your Score
             </span>
           </div>
           <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
@@ -572,7 +587,7 @@ function PracticeResults({
       )}
 
       {scoreSaved && (
-        <div className="text-sm font-bold text-green-600">Score saved to the leaderboard!</div>
+        <div className="text-sm font-bold text-green-600">You&apos;re on the leaderboard.</div>
       )}
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">

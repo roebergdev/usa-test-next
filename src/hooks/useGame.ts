@@ -5,6 +5,7 @@ import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
 import { useQuestions } from '@/hooks/useQuestions';
 import { Question } from '@/lib/types';
 import { TIMER_SECONDS, CONTACT_FORM_TRIGGER, TOTAL_QUESTIONS } from '@/lib/constants';
+import { track } from '@/lib/analytics';
 
 export function useGame() {
   const { supabase } = useSupabaseContext();
@@ -127,6 +128,11 @@ export function useGame() {
       setQuestions(allQuestions);
       setGameState('playing');
       setTimeLeft(TIMER_SECONDS);
+
+      track('practice_mode_started', {
+        quiz_mode: 'practice',
+        question_count: allQuestions.length,
+      });
     } catch (err) {
       console.error('Failed to start game:', err);
       alert(err instanceof Error ? err.message : 'Failed to start game.');
