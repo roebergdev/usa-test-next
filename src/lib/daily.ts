@@ -112,6 +112,36 @@ export function getStreak(): number {
   return streak;
 }
 
+/**
+ * Returns the streak count as of yesterday, regardless of whether
+ * the user has played today. Used to surface "at-risk" streak warnings.
+ */
+export function getYesterdayStreak(): number {
+  if (typeof window === 'undefined') return 0;
+
+  const base = new Date();
+  base.setDate(base.getDate() - 1);
+  const y = base.getFullYear();
+  const m = String(base.getMonth() + 1).padStart(2, '0');
+  const d = String(base.getDate()).padStart(2, '0');
+  const yesterdayKey = `${DAILY_STORAGE_PREFIX}${y}-${m}-${d}`;
+
+  if (!localStorage.getItem(yesterdayKey)) return 0;
+
+  let streak = 1;
+  for (let i = 1; i <= 365; i++) {
+    const date = new Date(base);
+    date.setDate(date.getDate() - i);
+    const dy = date.getFullYear();
+    const dm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const key = `${DAILY_STORAGE_PREFIX}${dy}-${dm}-${dd}`;
+    if (localStorage.getItem(key)) streak++;
+    else break;
+  }
+  return streak;
+}
+
 export function getOrCreateSessionId(): string {
   if (typeof window === 'undefined') return '';
   let id = localStorage.getItem(SESSION_ID_KEY);
