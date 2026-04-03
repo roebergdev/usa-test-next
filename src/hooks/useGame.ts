@@ -113,17 +113,22 @@ export function useGame() {
     setIsCorrect(null);
 
     try {
+      const results = await Promise.all(
+        Array.from({ length: TOTAL_QUESTIONS }, (_, i) => fetchQuestions(i + 1, 5, []))
+      );
+
       const allQuestions: Question[] = [];
       const asked: string[] = [];
 
-      for (let diff = 1; diff <= TOTAL_QUESTIONS; diff++) {
-        let q = await fetchQuestions(diff, 1, asked);
-        if (q.length === 0) {
-          q = await generateQuestions(diff, 1, asked);
+      for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+        let pool = results[i].filter((q) => !asked.includes(q.text));
+        if (pool.length === 0) {
+          const generated = await generateQuestions(i + 1, 1, asked);
+          pool = generated;
         }
-        if (q.length > 0) {
-          allQuestions.push(q[0]);
-          asked.push(q[0].text);
+        if (pool.length > 0) {
+          allQuestions.push(pool[0]);
+          asked.push(pool[0].text);
         }
       }
 
