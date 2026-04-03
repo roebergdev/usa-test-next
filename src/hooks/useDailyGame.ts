@@ -12,11 +12,9 @@ import {
   hasSavedScore,
   markScoreSaved,
   getStreak,
-  getOrCreateSessionId,
   getTodayString,
   type DailyResult,
 } from '@/lib/daily';
-import { buildDisplayName, stripPhone } from '@/lib/capture';
 import { track } from '@/lib/analytics';
 
 export function useDailyGame() {
@@ -39,10 +37,29 @@ export function useDailyGame() {
   const questionsRef = useRef(questions);
   const scoreRef = useRef(score);
 
+  // Holds the session_id returned by /api/session once fetched on mount.
+  // Used for the daily_results insert — avoids depending on localStorage.
+  const sessionIdRef = useRef<string | null>(null);
+
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
   useEffect(() => { questionsRef.current = questions; }, [questions]);
   useEffect(() => { scoreRef.current = score; }, [score]);
+
+  // Fetch the session_id from the server on mount.
+  // The session_id lives in an HTTP-only cookie (set by middleware) so the
+  // browser can't read it directly. /api/session reads it server-side and
+  // returns it; it also upserts the sessions DB row.
+  useEffect(() => {
+    fetch('/api/session')
+      .then((r) => r.json())
+      .then(({ sessionId }: { sessionId: string }) => {
+        sessionIdRef.current = sessionId;
+      })
+      .catch(() => {
+        // Non-fatal: daily_results will insert with a null session_id.
+      });
+  }, []);
 
   // Restore state from localStorage on mount.
   // If the user already completed today's quiz, jump straight to 'gameOver'
@@ -100,11 +117,14 @@ export function useDailyGame() {
         date: getTodayString(),
       });
 
+      // Insert daily result using the cookie-backed session_id.
+      // user_id is left null here; /api/identity backfills it after the user
+      // submits their contact info.
       supabase
         .from('daily_results')
         .insert({
           quiz_date: getTodayString(),
-          session_id: getOrCreateSessionId(),
+          session_id: sessionIdRef.current, // null if session fetch failed
           score: finalScore,
           total_questions: totalQuestions,
         })
@@ -173,6 +193,20 @@ export function useDailyGame() {
     advanceOrEnd(scoreRef.current);
   }, [advanceOrEnd]);
 
+  /**
+   * saveDailyContact — called when the user submits the "Claim My Spot" form.
+   *
+   * Delegates to POST /api/identity which handles:
+   *   - user upsert/lookup by normalized phone
+   *   - session → user linking
+   *   - daily_results user_id backfill
+   *   - leaderboard insert
+   *   - leads insert
+   *   - SMS notification (if consented)
+   *
+   * The HTTP-only session_id cookie is read server-side by the API route —
+   * we do not pass it in the request body.
+   */
   const saveDailyContact = async (
     firstName: string,
     lastInitial: string,
@@ -181,22 +215,23 @@ export function useDailyGame() {
   ) => {
     if (scoreSaved) return;
 
-    const displayName = buildDisplayName(firstName, lastInitial);
-    const digits = stripPhone(phone);
-
-    const [lbResult] = await Promise.all([
-      supabase.from('leaderboard').insert({ display_name: displayName, score, mode: 'daily' }),
-      supabase.from('leads').insert({
-        name: displayName,
-        phone: digits,
-        type: 'phone',
+    const res = await fetch('/api/identity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName,
+        lastInitial,
+        phone,
+        smsConsent,
         score,
-        sms_consent: smsConsent,
+        totalQuestions: questionsRef.current.length,
+        streak: getStreak(),
       }),
-    ]);
+    });
 
-    if (lbResult.error) {
-      console.error('Failed to save daily score:', lbResult.error.message);
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error('Failed to save identity:', text);
       return;
     }
 
@@ -209,21 +244,6 @@ export function useDailyGame() {
       streak_count: getStreak(),
       date: getTodayString(),
     });
-
-    // Fire-and-forget SMS notification — non-blocking
-    if (smsConsent) {
-      fetch('/api/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: digits,
-          firstName: firstName.trim(),
-          score,
-          totalQuestions: questionsRef.current.length,
-          streak: getStreak(),
-        }),
-      }).catch(() => {});
-    }
   };
 
   return {

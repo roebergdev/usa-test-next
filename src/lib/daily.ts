@@ -3,7 +3,6 @@ import { PREDEFINED_QUESTIONS } from '@/data/questions';
 
 export const DAILY_STORAGE_PREFIX = 'usa_test_daily_';
 export const SCORE_SAVED_PREFIX = 'usa_test_score_saved_';
-export const SESSION_ID_KEY = 'usa_test_session_id';
 
 // Difficulty curve for the 5-question daily quiz:
 // Q1-2: easy (1, 2), Q3-4: medium (4, 5), Q5: hard (7)
@@ -155,12 +154,6 @@ export function markScoreSaved(): void {
   localStorage.setItem(SCORE_SAVED_PREFIX + getTodayString(), '1');
 }
 
-export function getOrCreateSessionId(): string {
-  if (typeof window === 'undefined') return '';
-  let id = localStorage.getItem(SESSION_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(SESSION_ID_KEY, id);
-  }
-  return id;
-}
+// Session identity is now managed server-side via an HTTP-only cookie
+// (set by middleware.ts) and exposed to the client through GET /api/session.
+// The old localStorage-based getOrCreateSessionId() has been removed.
