@@ -4,7 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
 import { useQuestions } from '@/hooks/useQuestions';
 import { Question } from '@/lib/types';
-import { TIMER_SECONDS, CONTACT_FORM_TRIGGER, TOTAL_QUESTIONS } from '@/lib/constants';
+import { TIMER_SECONDS, TOTAL_QUESTIONS } from '@/lib/constants';
+
+const CONTACT_COLLECTED_KEY = 'usa_test_contact_collected';
 import { track } from '@/lib/analytics';
 
 export function useGame() {
@@ -37,6 +39,13 @@ export function useGame() {
   useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
   useEffect(() => { questionsRef.current = questions; }, [questions]);
   useEffect(() => { contactCollectedRef.current = contactCollected; }, [contactCollected]);
+
+  // Restore contact-collected flag from localStorage so returning users skip the form
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem(CONTACT_COLLECTED_KEY) === '1') {
+      setContactCollected(true);
+    }
+  }, []);
 
   // Timer logic
   useEffect(() => {
@@ -74,7 +83,12 @@ export function useGame() {
       setCurrentQuestionIndex(idx + 1);
       setTimeLeft(TIMER_SECONDS);
     } else {
-      setGameState('gameOver');
+      // Show contact capture once before game over; skip if already collected
+      if (!contactCollectedRef.current) {
+        setShowContactForm(true);
+      } else {
+        setGameState('gameOver');
+      }
     }
   }, []);
 
@@ -160,11 +174,6 @@ export function useGame() {
 
   const continueToNext = useCallback(() => {
     if (gameStateRef.current !== 'playing') return;
-    const questionNumber = currentQuestionIndexRef.current + 1;
-    if (questionNumber === CONTACT_FORM_TRIGGER && !contactCollectedRef.current) {
-      setShowContactForm(true);
-      return;
-    }
     advance();
   }, [advance]);
 
@@ -180,8 +189,9 @@ export function useGame() {
         score,
       });
       setContactCollected(true);
+      localStorage.setItem(CONTACT_COLLECTED_KEY, '1');
       setShowContactForm(false);
-      advance();
+      setGameState('gameOver');
     } catch (err) {
       console.error('Failed to save contact info', err);
       alert('Failed to save contact info. Please try again.');
