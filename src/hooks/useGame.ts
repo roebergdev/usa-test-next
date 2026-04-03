@@ -21,7 +21,7 @@ export function useGame() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [showContactForm, setShowContactForm] = useState(false);
-  const [contactType, setContactType] = useState<'email' | 'phone'>('email');
+  const [contactName, setContactName] = useState('');
   const [contactValue, setContactValue] = useState('');
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const [contactCollected, setContactCollected] = useState(false);
@@ -170,13 +170,13 @@ export function useGame() {
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contactValue) return;
+    if (!contactValue || !contactName) return;
     setIsSubmittingContact(true);
     try {
-      const updateData = contactType === 'email' ? { email: contactValue } : { phone: contactValue };
       await supabase.from('leads').insert({
-        ...updateData,
-        type: contactType,
+        name: contactName,
+        phone: contactValue,
+        type: 'phone',
         score,
       });
       setContactCollected(true);
@@ -193,6 +193,8 @@ export function useGame() {
   const goToLobby = () => {
     setGameState('lobby');
     setContactCollected(false);
+    setContactName('');
+    setContactValue('');
   };
 
   return {
@@ -207,8 +209,8 @@ export function useGame() {
     isCorrect,
     timeLeft,
     showContactForm,
-    contactType,
-    setContactType,
+    contactName,
+    setContactName,
     contactValue,
     setContactValue,
     isSubmittingContact,

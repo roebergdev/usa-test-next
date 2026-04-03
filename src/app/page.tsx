@@ -27,8 +27,8 @@ function GameApp() {
 
           {game.showContactForm && (
             <ContactForm
-              contactType={game.contactType}
-              setContactType={game.setContactType}
+              contactName={game.contactName}
+              setContactName={game.setContactName}
               contactValue={game.contactValue}
               setContactValue={game.setContactValue}
               isSubmittingContact={game.isSubmittingContact}
@@ -59,6 +59,7 @@ function GameApp() {
               onGoToLobby={game.goToLobby}
               onSaveScore={game.saveScoreWithName}
               scoreSaved={game.scoreSaved}
+              playerName={game.contactName}
             />
           )}
         </AnimatePresence>

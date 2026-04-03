@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
-import { Mail, Phone, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
 interface Lead {
   id: string;
+  name: string | null;
   email: string | null;
   phone: string | null;
   type: 'email' | 'phone';
@@ -21,34 +22,28 @@ export default function LeadsAdmin() {
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState('');
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
-    let query = supabase
+    const { data, count } = await supabase
       .from('leads')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
 
-    if (filterType) {
-      query = query.eq('type', filterType);
-    }
-
-    const { data, count } = await query;
     setLeads(data || []);
     setTotalCount(count || 0);
     setLoading(false);
-  }, [supabase, page, filterType]);
+  }, [supabase, page]);
 
   useEffect(() => {
     fetchLeads();
   }, [fetchLeads]);
 
   const exportCSV = () => {
-    const header = 'Type,Contact,Score,Date\n';
+    const header = 'Name,Phone,Score,Date\n';
     const rows = leads.map((l) =>
-      `${l.type},${l.type === 'email' ? l.email : l.phone},${l.score},${l.created_at}`
+      `${l.name ?? ''},${l.phone ?? l.email ?? ''},${l.score},${l.created_at}`
     ).join('\n');
     const blob = new Blob([header + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -78,18 +73,6 @@ export default function LeadsAdmin() {
         </button>
       </div>
 
-      <div className="flex gap-3 mb-6">
-        <select
-          value={filterType}
-          onChange={(e) => { setFilterType(e.target.value); setPage(0); }}
-          className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-amac-blue"
-        >
-          <option value="">All Types</option>
-          <option value="email">Email</option>
-          <option value="phone">Phone</option>
-        </select>
-      </div>
-
       <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-32">
@@ -101,8 +84,8 @@ export default function LeadsAdmin() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700 text-left text-xs text-gray-400 uppercase tracking-wider">
-                <th className="px-6 py-3 w-16">Type</th>
-                <th className="px-6 py-3">Contact</th>
+                <th className="px-6 py-3">Name</th>
+                <th className="px-6 py-3">Phone</th>
                 <th className="px-6 py-3 w-24">Score</th>
                 <th className="px-6 py-3 w-40">Date</th>
               </tr>
@@ -110,15 +93,11 @@ export default function LeadsAdmin() {
             <tbody className="divide-y divide-gray-700">
               {leads.map((lead) => (
                 <tr key={lead.id} className="hover:bg-gray-750">
-                  <td className="px-6 py-4">
-                    {lead.type === 'email' ? (
-                      <Mail className="w-4 h-4 text-blue-400" />
-                    ) : (
-                      <Phone className="w-4 h-4 text-green-400" />
-                    )}
+                  <td className="px-6 py-4 text-sm text-gray-200">
+                    {lead.name ?? <span className="text-gray-500 italic">—</span>}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-200">
-                    {lead.type === 'email' ? lead.email : lead.phone}
+                    {lead.phone ?? lead.email ?? '—'}
                   </td>
                   <td className="px-6 py-4 text-sm font-medium text-amac-blue">
                     {lead.score.toLocaleString()}

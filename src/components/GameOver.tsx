@@ -11,10 +11,11 @@ interface GameOverProps {
   onGoToLobby: () => void;
   onSaveScore: (name: string) => Promise<void>;
   scoreSaved: boolean;
+  playerName?: string;
 }
 
-export function GameOver({ score, onRestart, onGoToLobby, onSaveScore, scoreSaved }: GameOverProps) {
-  const [nameInput, setNameInput] = useState('');
+export function GameOver({ score, onRestart, onGoToLobby, onSaveScore, scoreSaved, playerName = '' }: GameOverProps) {
+  const [nameInput, setNameInput] = useState(playerName);
   const [saving, setSaving] = useState(false);
 
   const handleSubmitName = async (e: React.FormEvent) => {
