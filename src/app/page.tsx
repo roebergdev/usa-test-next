@@ -14,7 +14,13 @@ import { AnimatePresence } from 'motion/react';
 type AppScreen = 'home' | 'daily' | 'practice';
 
 // Daily quiz sub-app — owns useDailyGame hook
-function DailyGameApp({ onBack }: { onBack: () => void }) {
+function DailyGameApp({
+  onBack,
+  onPlayPractice,
+}: {
+  onBack: () => void;
+  onPlayPractice: () => void;
+}) {
   const game = useDailyGame();
 
   // Start game immediately on mount if not already played
@@ -46,9 +52,10 @@ function DailyGameApp({ onBack }: { onBack: () => void }) {
           mode="daily"
           score={game.score}
           totalQuestions={game.totalQuestions}
-          onSaveScore={game.saveScoreWithName}
+          onSaveDailyContact={game.saveDailyContact}
           scoreSaved={game.scoreSaved}
           onGoToLobby={onBack}
+          onPlayPractice={onPlayPractice}
           streak={game.streak}
         />
       )}
@@ -136,7 +143,11 @@ export default function Home() {
           )}
 
           {screen === 'daily' && (
-            <DailyGameApp key="daily" onBack={() => setScreen('home')} />
+            <DailyGameApp
+              key="daily"
+              onBack={() => setScreen('home')}
+              onPlayPractice={() => setScreen('practice')}
+            />
           )}
 
           {screen === 'practice' && (

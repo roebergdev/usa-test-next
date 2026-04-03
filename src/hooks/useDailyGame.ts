@@ -145,17 +145,23 @@ export function useDailyGame() {
     advanceOrEnd(scoreRef.current);
   }, [advanceOrEnd]);
 
-  const saveScoreWithName = async (name: string) => {
+  const saveDailyContact = async (
+    firstName: string,
+    lastInitial: string,
+    phone: string
+  ) => {
     if (scoreSaved) return;
-    const { error } = await supabase.from('leaderboard').insert({
-      display_name: name,
-      score,
-      mode: 'daily',
-    });
-    if (!error) {
-      setScoreSaved(true);
+    const displayName = `${firstName.trim()} ${lastInitial.trim().charAt(0).toUpperCase()}.`;
+
+    const [lbResult] = await Promise.all([
+      supabase.from('leaderboard').insert({ display_name: displayName, score, mode: 'daily' }),
+      supabase.from('leads').insert({ name: displayName, phone, type: 'phone', score }),
+    ]);
+
+    if (lbResult.error) {
+      console.error('Failed to save daily score:', lbResult.error.message);
     } else {
-      console.error('Failed to save daily score:', error.message);
+      setScoreSaved(true);
     }
   };
 
@@ -174,6 +180,6 @@ export function useDailyGame() {
     startGame,
     handleAnswer,
     continueToNext,
-    saveScoreWithName,
+    saveDailyContact,
   };
 }
