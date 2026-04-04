@@ -170,7 +170,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-amac-gray text-amac-dark font-sans selection:bg-amac-blue/10">
-      <Header />
+      <Header onHome={() => setScreen('home')} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-16">
         <AnimatePresence mode="wait">
