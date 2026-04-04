@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
       .from('users')
       .insert({
         normalized_phone: normalizedPhone,
+        raw_phone: digits,
         first_name: firstName.trim(),
         last_initial: lastInitial.trim().toUpperCase(),
         sms_consent: smsConsent,
