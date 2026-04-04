@@ -17,11 +17,16 @@ export type AnalyticsEvent =
   | 'home_viewed'
   | 'daily_quiz_started'
   | 'daily_quiz_completed'
+  | 'daily_results_viewed'
   | 'practice_mode_started'
   | 'save_score_clicked'
   | 'user_info_submitted'
   | 'sms_consent_checked'
-  | 'leaderboard_viewed';
+  | 'leaderboard_viewed'
+  | 'results_percentile_shown'
+  | 'streak_shown'
+  | 'personal_best_shown'
+  | 'leaderboard_preview_shown';
 
 // ─── Property shapes ──────────────────────────────────────────────────────────
 
@@ -40,6 +45,8 @@ export interface AnalyticsProperties {
   date?: string;
   /** For sms_consent_checked: true when box was checked, false when unchecked */
   checked?: boolean;
+  /** Tier label shown to user, e.g. "Top 10%", "Top 25%", "Top 50%" */
+  percentile_tier?: string;
 }
 
 // ─── Core track function ──────────────────────────────────────────────────────

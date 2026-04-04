@@ -155,6 +155,59 @@ export function markScoreSaved(): void {
   localStorage.setItem(SCORE_SAVED_PREFIX + getTodayString(), '1');
 }
 
+export interface PersonalBest {
+  bestScore: number;
+  bestTimeSeconds: number | null;
+  gamesPlayed: number;
+}
+
+/**
+ * Scans the last 60 days of localStorage (excluding today) and returns the
+ * user's personal best score and fastest completion time.
+ * Returns null when no prior play history is found.
+ *
+ * TODO: Once users are authenticated by phone, replace with a server-side
+ * query against daily_results WHERE user_id = <current user> to get accurate
+ * cross-device history.
+ */
+export function getPersonalBest(todayDate: string): PersonalBest | null {
+  if (typeof window === 'undefined') return null;
+
+  let bestScore = -1;
+  let bestTimeSeconds: number | null = null;
+  let gamesPlayed = 0;
+
+  for (let i = 1; i <= 60; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const y = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${y}-${mo}-${day}`;
+    if (dateStr === todayDate) continue;
+
+    const stored = localStorage.getItem(DAILY_STORAGE_PREFIX + dateStr);
+    if (!stored) continue;
+
+    try {
+      const result = JSON.parse(stored) as DailyResult;
+      gamesPlayed++;
+      if (result.score > bestScore) {
+        bestScore = result.score;
+        bestTimeSeconds = result.timeSeconds ?? null;
+      } else if (result.score === bestScore && result.timeSeconds != null) {
+        if (bestTimeSeconds === null || result.timeSeconds < bestTimeSeconds) {
+          bestTimeSeconds = result.timeSeconds;
+        }
+      }
+    } catch {
+      // ignore corrupt entries
+    }
+  }
+
+  return gamesPlayed === 0 ? null : { bestScore, bestTimeSeconds, gamesPlayed };
+}
+
 // Session identity is now managed server-side via an HTTP-only cookie
 // (set by middleware.ts) and exposed to the client through GET /api/session.
 // The old localStorage-based getOrCreateSessionId() has been removed.

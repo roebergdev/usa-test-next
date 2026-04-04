@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getRank } from '@/lib/constants';
 import { QuizMode } from '@/lib/types';
 import { track } from '@/lib/analytics';
@@ -15,6 +15,11 @@ import {
   buildDisplayName,
   SMS_CONSENT_TEXT,
 } from '@/lib/capture';
+import {
+  getPersonalBest,
+  getTodayString,
+  type PersonalBest,
+} from '@/lib/daily';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Flag,
@@ -25,8 +30,8 @@ import {
   CheckCircle2,
   ChevronRight,
   Dumbbell,
-  Star,
   MessageSquare,
+  TrendingUp,
 } from 'lucide-react';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -65,13 +70,85 @@ function getReinforcement(score: number, total: number): string {
   return 'Every streak starts somewhere. See you tomorrow.';
 }
 
-function getRankEstimate(score: number, total: number): string {
+/**
+ * Returns a tier label and Tailwind classes based on score.
+ *
+ * NOTE: These tiers are currently static score-based estimates.
+ * To make them real, compute live percentile cutoffs from:
+ *   SELECT score, COUNT(*) FROM daily_results WHERE quiz_date = today GROUP BY score
+ * and map actual score distributions to tier thresholds.
+ */
+function getTierInfo(score: number, total: number): { label: string; cls: string } {
   const pct = score / total;
-  if (pct === 1) return "Top 5% today";
-  if (pct >= 0.8) return "Top 20% today";
-  if (pct >= 0.6) return "Top 45% today";
-  if (pct >= 0.4) return "Top 65% today";
-  return 'Keep playing to climb the ranks';
+  if (pct === 1) return { label: 'Top 10%', cls: 'text-amber-700 bg-amber-50 border-amber-300' };
+  if (pct >= 0.8) return { label: 'Top 25%', cls: 'text-amac-blue bg-amac-blue/8 border-amac-blue/25' };
+  if (pct >= 0.6) return { label: 'Top 50%', cls: 'text-green-700 bg-green-50 border-green-300' };
+  return { label: 'Completed', cls: 'text-neutral-500 bg-neutral-50 border-neutral-200' };
+}
+
+/**
+ * Returns a "you beat X% of players" message based on score.
+ *
+ * NOTE: Static estimates. Replace with a real-time query against daily_results
+ * (e.g. what fraction of today's sessions scored < this score) once you have
+ * enough daily volume to make the numbers meaningful.
+ */
+function getPercentileMessage(score: number, total: number): string | null {
+  const pct = score / total;
+  if (pct === 1) return 'You beat ~90% of players today';
+  if (pct >= 0.8) return 'You beat ~72% of players today';
+  if (pct >= 0.6) return 'You beat ~47% of players today';
+  if (pct >= 0.4) return 'You beat ~28% of players today';
+  if (pct >= 0.2) return 'You beat ~13% of players today';
+  return null;
+}
+
+/**
+ * Derives a personal-progress message from today's result vs localStorage history.
+ * Returns null when:
+ *  - No prior history found (new users)
+ *  - Fewer than 3 prior games (avoid discouraging "your best was higher" messaging too early)
+ */
+function getPersonalBestMessage(
+  score: number,
+  timeSeconds: number | null,
+  pb: PersonalBest | null
+): { headline: string; sub?: string } | null {
+  if (!pb) return null;
+
+  if (score > pb.bestScore) {
+    return {
+      headline: 'New personal best!',
+      sub: `Up from ${pb.bestScore} — you're improving.`,
+    };
+  }
+
+  if (score === pb.bestScore) {
+    if (
+      timeSeconds != null &&
+      pb.bestTimeSeconds != null &&
+      timeSeconds < pb.bestTimeSeconds
+    ) {
+      return {
+        headline: 'Fastest time yet!',
+        sub: `${timeSeconds}s — beat your previous best of ${pb.bestTimeSeconds}s`,
+      };
+    }
+    return {
+      headline: 'Matched your best',
+      sub: 'Consistent. Keep showing up.',
+    };
+  }
+
+  // Score is lower than personal best — only show for established players
+  if (pb.gamesPlayed >= 3) {
+    return {
+      headline: `Your best is ${pb.bestScore}/${5}`,
+      sub: 'Come back tomorrow to chase it',
+    };
+  }
+
+  return null;
 }
 
 // ─── Field component ──────────────────────────────────────────────────────────
@@ -145,13 +222,48 @@ function DailyResults({
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Read prior play history from localStorage on first render (client-only).
+  // TODO: Once users are authenticated by phone, replace with server-side
+  // personal-best data from daily_results WHERE user_id = <current user>.
+  const [personalBest] = useState<PersonalBest | null>(() =>
+    typeof window !== 'undefined' ? getPersonalBest(getTodayString()) : null
+  );
+
+  const tier = getTierInfo(score, totalQuestions);
+  const percentileMsg = getPercentileMessage(score, totalQuestions);
+  const personalBestMsg = getPersonalBestMessage(score, totalSeconds ?? null, personalBest);
+
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   });
 
-  // Update a field and re-validate live after first submission attempt
+  // Fire analytics once on mount
+  useEffect(() => {
+    track('daily_results_viewed', {
+      quiz_mode: 'daily',
+      score,
+      question_count: totalQuestions,
+      streak_count: streak,
+    });
+    if (percentileMsg) {
+      track('results_percentile_shown', {
+        quiz_mode: 'daily',
+        score,
+        question_count: totalQuestions,
+        percentile_tier: tier.label,
+      });
+    }
+    if (streak >= 1) {
+      track('streak_shown', { quiz_mode: 'daily', streak_count: streak });
+    }
+    if (personalBestMsg) {
+      track('personal_best_shown', { quiz_mode: 'daily', score });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const updateField = <K extends keyof CaptureFormData>(key: K, value: CaptureFormData[K]) => {
     const next = { ...form, [key]: value };
     setForm(next);
@@ -168,7 +280,6 @@ function DailyResults({
     const errs = validateCapture(form);
     setErrors(errs);
     if (hasErrors(errs) || saving) return;
-
     setSaving(true);
     await onSaveDailyContact?.(form.firstName, form.lastInitial, form.phone, form.smsConsent);
     setSaving(false);
@@ -178,68 +289,103 @@ function DailyResults({
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="max-w-xl mx-auto space-y-5 sm:space-y-6 py-6 sm:py-10"
+      className="max-w-xl mx-auto space-y-3 sm:space-y-4 py-6 sm:py-10"
     >
-      {/* Header */}
-      <div className="text-center space-y-3">
-        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-[1.75rem] bg-amac-blue/10 flex items-center justify-center mx-auto rotate-6">
-          <Flag className="w-8 h-8 sm:w-10 sm:h-10 text-amac-blue" />
-        </div>
-        <div>
-          <h2 className="text-3xl sm:text-5xl font-black tracking-tighter uppercase text-amac-dark leading-none">
-            Quiz Complete!
-          </h2>
-          <p className="text-neutral-400 font-medium text-sm mt-1.5">{today}</p>
-        </div>
+      {/* Date line */}
+      <div className="flex items-center gap-2 justify-center mb-1">
+        <Flag className="w-3.5 h-3.5 text-amac-blue" />
+        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{today}</p>
       </div>
 
-      {/* Score + streak */}
-      <div className={`grid gap-3 sm:gap-4 ${streak > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        <div className="bg-white rounded-2xl sm:rounded-3xl border border-amac-blue/5 shadow-lg shadow-amac-blue/5 p-6 sm:p-8 text-center">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-1">
-            Today&apos;s Score
-          </p>
-          <p className="text-5xl sm:text-6xl font-black tracking-tighter text-amac-blue leading-none">
+      {/* ── Score hero ── */}
+      <div className="bg-white rounded-3xl border border-amac-blue/5 shadow-xl shadow-amac-blue/5 p-7 sm:p-10 text-center">
+        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-3">
+          Today&apos;s Result
+        </p>
+        <p className="text-base font-bold text-neutral-400 leading-none mb-1">You got</p>
+        <div className="flex items-baseline justify-center gap-1.5">
+          <span className="text-7xl sm:text-8xl font-black tracking-tighter text-amac-blue leading-none">
             {score}
-            <span className="text-2xl sm:text-3xl text-neutral-300">/{totalQuestions}</span>
-          </p>
-          {totalSeconds != null && (
-            <p className="text-sm font-black text-neutral-400 mt-1">
-              {totalSeconds}s
-            </p>
-          )}
-          <p className="text-xs sm:text-sm font-medium text-neutral-500 mt-2 leading-snug">
-            {getReinforcement(score, totalQuestions)}
-          </p>
+          </span>
+          <span className="text-3xl sm:text-4xl font-black text-neutral-300 leading-none">
+            /{totalQuestions}
+          </span>
         </div>
+        {totalSeconds != null && (
+          <p className="text-sm font-bold text-neutral-400 mt-2">{totalSeconds}s</p>
+        )}
+        <p className="text-sm sm:text-base font-medium text-neutral-500 mt-3 leading-snug">
+          {getReinforcement(score, totalQuestions)}
+        </p>
+      </div>
 
-        {streak > 1 && (
-          <div className="bg-orange-50 rounded-2xl sm:rounded-3xl border border-orange-200 shadow-lg shadow-orange-100 p-6 sm:p-8 text-center">
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-400 mb-1">
-              Streak
-            </p>
-            <div className="flex items-center justify-center gap-1.5">
-              <Flame className="w-7 h-7 sm:w-9 sm:h-9 text-orange-500" />
-              <span className="text-5xl sm:text-6xl font-black tracking-tighter text-orange-500 leading-none">
-                {streak}
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm font-medium text-orange-500 mt-2">day streak</p>
-          </div>
+      {/* ── Tier + percentile ── */}
+      <div className="bg-white rounded-2xl border border-amac-blue/5 shadow-sm p-4 sm:p-5 flex items-center gap-3 sm:gap-4">
+        <span
+          className={`shrink-0 px-3 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest ${tier.cls}`}
+        >
+          {tier.label}
+        </span>
+        {percentileMsg && (
+          <p className="text-sm font-bold text-neutral-600">{percentileMsg}</p>
         )}
       </div>
 
-      {/* Rank chip */}
-      <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-amac-blue/10 rounded-full w-fit mx-auto shadow-sm">
-        <Star className="w-3.5 h-3.5 text-amac-blue" />
-        <span className="text-xs font-black text-amac-blue">{getRankEstimate(score, totalQuestions)}</span>
-        <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-widest">(est.)</span>
+      {/* ── Streak — show for any streak >= 1 ── */}
+      <div
+        className={`rounded-2xl border p-4 sm:p-5 flex items-center gap-4 ${
+          streak > 1
+            ? 'bg-orange-50 border-orange-200'
+            : 'bg-white border-amac-blue/5'
+        }`}
+      >
+        <Flame
+          className={`w-8 h-8 sm:w-9 sm:h-9 shrink-0 ${
+            streak > 1 ? 'text-orange-500' : 'text-neutral-300'
+          }`}
+        />
+        <div>
+          {streak > 1 ? (
+            <>
+              <p className="text-lg sm:text-xl font-black text-orange-500 leading-none">
+                {streak}-day streak
+              </p>
+              <p className="text-xs font-medium text-orange-400 mt-0.5">
+                Don&apos;t break it — come back tomorrow
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-base font-black text-neutral-700 leading-none">Day 1</p>
+              <p className="text-xs font-medium text-neutral-400 mt-0.5">
+                Come back tomorrow to start your streak
+              </p>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* CTA area */}
+      {/* ── Personal best — only when historical data exists ── */}
+      {personalBestMsg && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-green-50 border border-green-200 rounded-2xl p-4 sm:p-5 flex items-start gap-3"
+        >
+          <TrendingUp className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-black text-green-700">{personalBestMsg.headline}</p>
+            {personalBestMsg.sub && (
+              <p className="text-xs font-medium text-green-600 mt-0.5">{personalBestMsg.sub}</p>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── CTA area ── */}
       <AnimatePresence mode="wait">
         {scoreSaved ? (
-          /* ── Success screen ─────────────────────────────────────────────── */
+          /* Success state */
           <motion.div
             key="success"
             initial={{ opacity: 0, y: 12 }}
@@ -250,14 +396,14 @@ function DailyResults({
               <CheckCircle2 className="w-7 h-7 text-green-600" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-3xl sm:text-4xl font-black tracking-tighter text-amac-dark">
-                You&apos;re on the board.
+              <h3 className="text-2xl sm:text-3xl font-black tracking-tighter text-amac-dark">
+                Score saved.
               </h3>
               <p className="text-sm sm:text-base font-bold text-neutral-500">
-                Score saved. See you tomorrow.
+                We&apos;ll remind you when tomorrow&apos;s quiz drops.
               </p>
-              <p className="text-sm sm:text-base font-medium text-neutral-400">
-                New quiz drops daily — keep the streak alive.
+              <p className="text-sm font-medium text-neutral-400">
+                Keep the streak alive — new quiz every day.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -280,22 +426,21 @@ function DailyResults({
             </div>
           </motion.div>
         ) : showCapture ? (
-          /* ── Capture form ────────────────────────────────────────────────── */
+          /* Capture form — framed around saving progress, not joining a leaderboard */
           <motion.div
             key="capture"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white border border-amac-blue/10 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-xl shadow-amac-blue/5 space-y-5"
           >
-            {/* Form header */}
             <div>
               <div className="flex items-center gap-2 mb-0.5">
                 <Trophy className="w-4 h-4 text-amac-blue" />
-                <h3 className="font-black text-amac-dark text-base sm:text-lg">Get on the Leaderboard</h3>
+                <h3 className="font-black text-amac-dark text-base sm:text-lg">Save Your Progress</h3>
               </div>
               {previewName && (
                 <p className="text-sm text-neutral-400 font-medium">
-                  Leaderboard name:{' '}
+                  Saved as:{' '}
                   <span className="font-black text-amac-dark">{previewName}</span>
                 </p>
               )}
@@ -304,7 +449,7 @@ function DailyResults({
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               {/* Name row */}
               <div className="flex gap-3">
-                <Field label="First Name" error={errors.firstName} >
+                <Field label="First Name" error={errors.firstName}>
                   <input
                     type="text"
                     autoComplete="given-name"
@@ -314,9 +459,7 @@ function DailyResults({
                     onChange={(e) =>
                       updateField('firstName', normalizeFirstName(e.target.value) || e.target.value)
                     }
-                    onBlur={(e) =>
-                      updateField('firstName', normalizeFirstName(e.target.value))
-                    }
+                    onBlur={(e) => updateField('firstName', normalizeFirstName(e.target.value))}
                     className={`${inputCls(!!errors.firstName)} flex-1`}
                   />
                 </Field>
@@ -343,9 +486,7 @@ function DailyResults({
                   autoComplete="tel"
                   placeholder="(555) 000-0000"
                   value={form.phone}
-                  onChange={(e) =>
-                    updateField('phone', formatPhoneDisplay(e.target.value))
-                  }
+                  onChange={(e) => updateField('phone', formatPhoneDisplay(e.target.value))}
                   className={inputCls(!!errors.phone)}
                 />
               </Field>
@@ -353,11 +494,11 @@ function DailyResults({
               {/* Benefits */}
               <ul className="space-y-1.5 py-1">
                 {[
-                  "Your name goes on today's national leaderboard",
+                  'Your score is saved and tracked over time',
                   streak > 1
                     ? `Protect your ${streak}-day streak`
-                    : 'Start a daily streak — show up tomorrow',
-                  "Get a heads-up text when tomorrow's quiz drops",
+                    : 'Start tracking your daily streak',
+                  'Get occasional heads-ups when quizzes drop',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-xs text-neutral-600 font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amac-blue shrink-0 mt-0.5" />
@@ -429,7 +570,7 @@ function DailyResults({
                 disabled={saving}
                 className="w-full py-4 bg-amac-red text-white rounded-xl font-black text-base flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all disabled:opacity-50 shadow-lg shadow-amac-red/20 active:scale-[0.98]"
               >
-                {saving ? 'Saving...' : 'Claim My Spot'}
+                {saving ? 'Saving...' : 'Save My Score'}
                 {!saving && <ChevronRight className="w-4 h-4" />}
               </button>
             </form>
@@ -447,7 +588,7 @@ function DailyResults({
             </button>
           </motion.div>
         ) : (
-          /* ── Default CTAs ──────────────────────────────────────────────── */
+          /* Default CTAs — primary: save progress; secondary: practice, home */
           <motion.div
             key="ctas"
             initial={{ opacity: 0, y: 8 }}
@@ -469,7 +610,7 @@ function DailyResults({
               <div className="absolute -inset-0.5 bg-amac-red rounded-2xl blur opacity-20 group-hover:opacity-35 transition duration-500" />
               <div className="relative w-full py-4 sm:py-5 bg-amac-red text-white rounded-xl font-black text-base sm:text-lg flex items-center justify-center gap-2.5 hover:bg-amac-red/90 transition-all shadow-xl shadow-amac-red/20 active:scale-[0.98]">
                 <Trophy className="w-5 h-5" />
-                Claim My Spot
+                {streak > 1 ? `Save My Score & Keep My Streak` : 'Save Today\'s Score'}
               </div>
             </button>
 
@@ -491,6 +632,17 @@ function DailyResults({
                 Home
               </button>
             </div>
+
+            {/* Secondary leaderboard link — low visual weight */}
+            <button
+              onClick={() => {
+                track('leaderboard_preview_shown', { quiz_mode: 'daily', score });
+                onGoToLobby();
+              }}
+              className="w-full text-center text-xs text-neutral-400 hover:text-amac-blue font-bold transition-colors pt-1"
+            >
+              View today&apos;s leaderboard →
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
