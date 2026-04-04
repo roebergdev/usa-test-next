@@ -8,7 +8,7 @@ import { Footer } from '@/components/Footer';
 import { HomeScreen } from '@/components/HomeScreen';
 import { GameBoard } from '@/components/GameBoard';
 import { GameOver } from '@/components/GameOver';
-import { ContactForm } from '@/components/ContactForm';
+
 import { AnimatePresence, motion } from 'motion/react';
 
 type AppScreen = 'home' | 'daily' | 'practice';
@@ -119,35 +119,21 @@ function PracticeGameApp({ onBack }: { onBack: () => void }) {
     <AnimatePresence mode="wait">
       {/* lobby state is transient — auto-started above */}
 
-      {game.showContactForm && (
-        <ContactForm
-          key="contact"
-          contactName={game.contactName}
-          setContactName={game.setContactName}
-          contactValue={game.contactValue}
-          setContactValue={game.setContactValue}
-          isSubmittingContact={game.isSubmittingContact}
-          onSubmit={game.handleContactSubmit}
+      {game.gameState === 'playing' && game.questions.length > 0 && (
+        <GameBoard
+          key="practice-board"
+          question={game.questions[game.currentQuestionIndex]}
+          score={game.score}
+          timeLeft={game.timeLeft}
+          selectedAnswer={game.selectedAnswer}
+          isCorrect={game.isCorrect}
+          loading={game.loading}
+          onAnswer={game.handleAnswer}
+          onContinue={game.continueToNext}
+          questionNumber={game.currentQuestionIndex + 1}
+          totalQuestions={game.totalQuestions}
         />
       )}
-
-      {game.gameState === 'playing' &&
-        game.questions.length > 0 &&
-        !game.showContactForm && (
-          <GameBoard
-            key="practice-board"
-            question={game.questions[game.currentQuestionIndex]}
-            score={game.score}
-            timeLeft={game.timeLeft}
-            selectedAnswer={game.selectedAnswer}
-            isCorrect={game.isCorrect}
-            loading={game.loading}
-            onAnswer={game.handleAnswer}
-            onContinue={game.continueToNext}
-            questionNumber={game.currentQuestionIndex + 1}
-            totalQuestions={game.totalQuestions}
-          />
-        )}
 
       {game.gameState === 'gameOver' && (
         <GameOver
@@ -159,7 +145,6 @@ function PracticeGameApp({ onBack }: { onBack: () => void }) {
           onGoToLobby={onBack}
           onSaveScore={game.saveScoreWithName}
           scoreSaved={game.scoreSaved}
-          playerName={game.contactName}
         />
       )}
     </AnimatePresence>

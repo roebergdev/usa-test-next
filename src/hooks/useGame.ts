@@ -5,15 +5,12 @@ import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
 import { useQuestions } from '@/hooks/useQuestions';
 import { Question } from '@/lib/types';
 import { TIMER_SECONDS, TOTAL_QUESTIONS } from '@/lib/constants';
-
-const CONTACT_COLLECTED_KEY = 'usa_test_contact_collected';
 import { track } from '@/lib/analytics';
 
 export function useGame() {
   const { supabase } = useSupabaseContext();
   const { fetchQuestions, generateQuestions } = useQuestions();
 
-  // Game state
   const [gameState, setGameState] = useState<'lobby' | 'playing' | 'gameOver'>('lobby');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -23,29 +20,14 @@ export function useGame() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
-  const [showContactForm, setShowContactForm] = useState(false);
-  const [contactName, setContactName] = useState('');
-  const [contactValue, setContactValue] = useState('');
-  const [isSubmittingContact, setIsSubmittingContact] = useState(false);
-  const [contactCollected, setContactCollected] = useState(false);
 
-  // Use refs to avoid stale closures in setTimeout callbacks
   const gameStateRef = useRef(gameState);
   const currentQuestionIndexRef = useRef(currentQuestionIndex);
   const questionsRef = useRef(questions);
-  const contactCollectedRef = useRef(contactCollected);
 
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
   useEffect(() => { questionsRef.current = questions; }, [questions]);
-  useEffect(() => { contactCollectedRef.current = contactCollected; }, [contactCollected]);
-
-  // Restore contact-collected flag from localStorage so returning users skip the form
-  useEffect(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem(CONTACT_COLLECTED_KEY) === '1') {
-      setContactCollected(true);
-    }
-  }, []);
 
   // Timer logic
   useEffect(() => {
@@ -56,7 +38,6 @@ export function useGame() {
       return () => clearTimeout(timer);
     }
 
-    // Time's up — show wrong answer state; user must click Continue
     setSelectedAnswer('');
     setIsCorrect(false);
     playSound(false);
@@ -83,12 +64,7 @@ export function useGame() {
       setCurrentQuestionIndex(idx + 1);
       setTimeLeft(TIMER_SECONDS);
     } else {
-      // Show contact capture once before game over; skip if already collected
-      if (!contactCollectedRef.current) {
-        setShowContactForm(true);
-      } else {
-        setGameState('gameOver');
-      }
+      setGameState('gameOver');
     }
   }, []);
 
@@ -111,7 +87,6 @@ export function useGame() {
     setScore(0);
     setScoreSaved(false);
     setCurrentQuestionIndex(0);
-    setShowContactForm(false);
     setSelectedAnswer(null);
     setIsCorrect(null);
 
@@ -169,43 +144,12 @@ export function useGame() {
     if (correct) {
       setScore((prev) => prev + 1);
     }
-    // User must click Continue to advance
   };
 
   const continueToNext = useCallback(() => {
     if (gameStateRef.current !== 'playing') return;
     advance();
   }, [advance]);
-
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!contactValue || !contactName) return;
-    setIsSubmittingContact(true);
-    try {
-      await supabase.from('leads').insert({
-        name: contactName,
-        phone: contactValue,
-        type: 'phone',
-        score,
-      });
-      setContactCollected(true);
-      localStorage.setItem(CONTACT_COLLECTED_KEY, '1');
-      setShowContactForm(false);
-      setGameState('gameOver');
-    } catch (err) {
-      console.error('Failed to save contact info', err);
-      alert('Failed to save contact info. Please try again.');
-    } finally {
-      setIsSubmittingContact(false);
-    }
-  };
-
-  const goToLobby = () => {
-    setGameState('lobby');
-    setContactCollected(false);
-    setContactName('');
-    setContactValue('');
-  };
 
   return {
     gameState,
@@ -218,18 +162,10 @@ export function useGame() {
     selectedAnswer,
     isCorrect,
     timeLeft,
-    showContactForm,
-    contactName,
-    setContactName,
-    contactValue,
-    setContactValue,
-    isSubmittingContact,
     totalQuestions: questions.length,
     startGame,
     handleAnswer,
     continueToNext,
-    handleContactSubmit,
     saveScoreWithName,
-    goToLobby,
   };
 }
