@@ -1,9 +1,12 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Question } from '@/lib/types';
 import { Timer } from '@/components/Timer';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+
+const AUTO_ADVANCE_MS = 1200;
 
 interface GameBoardProps {
   question: Question;
@@ -38,7 +41,16 @@ export function GameBoard({
 }: GameBoardProps) {
   const answered = selectedAnswer !== null;
   const timedOut = answered && selectedAnswer === '';
+  const hasExplanation = Boolean(question.explanation);
   const diff = getDifficultyLabel(question.difficulty);
+
+  // Auto-advance when answered and there's no explanation to read.
+  // When an explanation exists, the user must click the button themselves.
+  useEffect(() => {
+    if (!answered || hasExplanation) return;
+    const t = setTimeout(onContinue, AUTO_ADVANCE_MS);
+    return () => clearTimeout(t);
+  }, [answered, hasExplanation, onContinue]);
 
   return (
     <motion.div
@@ -180,17 +192,19 @@ export function GameBoard({
               </div>
             </div>
 
-            <button
-              onClick={onContinue}
-              className={`w-full py-3 sm:py-4 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-sm ${
-                isCorrect
-                  ? 'bg-green-600 hover:bg-green-700 text-white'
-                  : 'bg-amac-red hover:bg-amac-red/90 text-white'
-              }`}
-            >
-              {questionNumber < totalQuestions ? 'Next Question' : 'See Results'}
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            {hasExplanation && (
+              <button
+                onClick={onContinue}
+                className={`w-full py-3 sm:py-4 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-sm ${
+                  isCorrect
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-amac-red hover:bg-amac-red/90 text-white'
+                }`}
+              >
+                {questionNumber < totalQuestions ? 'Next Question' : 'See Results'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
