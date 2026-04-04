@@ -50,6 +50,8 @@ interface GameOverProps {
   scoreSaved: boolean;
   playerName?: string;
   streak?: number;
+  /** Total seconds taken across all questions — used for tiebreaking display */
+  totalSeconds?: number | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -118,6 +120,7 @@ function DailyResults({
   totalQuestions,
   streak,
   scoreSaved,
+  totalSeconds,
   onSaveDailyContact,
   onPlayPractice,
   onGoToLobby,
@@ -126,6 +129,7 @@ function DailyResults({
   totalQuestions: number;
   streak: number;
   scoreSaved: boolean;
+  totalSeconds?: number | null;
   onSaveDailyContact?: (f: string, l: string, p: string, c: boolean) => Promise<void>;
   onPlayPractice?: () => void;
   onGoToLobby: () => void;
@@ -199,6 +203,11 @@ function DailyResults({
             {score}
             <span className="text-2xl sm:text-3xl text-neutral-300">/{totalQuestions}</span>
           </p>
+          {totalSeconds != null && (
+            <p className="text-sm font-black text-neutral-400 mt-1">
+              {totalSeconds}s
+            </p>
+          )}
           <p className="text-xs sm:text-sm font-medium text-neutral-500 mt-2 leading-snug">
             {getReinforcement(score, totalQuestions)}
           </p>
@@ -626,6 +635,7 @@ export function GameOver({
   scoreSaved,
   playerName = '',
   streak = 0,
+  totalSeconds,
 }: GameOverProps) {
   if (mode === 'daily') {
     return (
@@ -633,6 +643,7 @@ export function GameOver({
         score={score}
         totalQuestions={totalQuestions}
         streak={streak}
+        totalSeconds={totalSeconds}
         scoreSaved={scoreSaved}
         onSaveDailyContact={onSaveDailyContact}
         onPlayPractice={onPlayPractice}

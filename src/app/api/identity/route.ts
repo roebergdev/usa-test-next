@@ -11,6 +11,7 @@ interface IdentityBody {
   smsConsent: boolean;
   score: number;
   totalQuestions: number;
+  timeSeconds: number | null;
   streak: number;
 }
 
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const { firstName, lastInitial, phone, smsConsent, score, totalQuestions, streak } = body;
+  const { firstName, lastInitial, phone, smsConsent, score, totalQuestions, timeSeconds, streak } = body;
 
   // ── 1. Normalize phone ──────────────────────────────────────────────────────
   const digits = stripPhone(phone);
@@ -141,6 +142,7 @@ export async function POST(request: NextRequest) {
     display_name: resolvedDisplayName,
     score,
     mode: 'daily',
+    time_seconds: timeSeconds ?? null,
   });
 
   if (lbError) {

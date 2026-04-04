@@ -259,8 +259,8 @@ function LeaderboardPreview({
 
   const isPlaceholder = leaderboard.length === 0;
   const rows = isPlaceholder
-    ? PLACEHOLDER_ROWS
-    : leaderboard.slice(0, 5).map((e) => ({ display_name: e.display_name, score: e.score }));
+    ? PLACEHOLDER_ROWS.map((r) => ({ ...r, time_seconds: null as number | null }))
+    : leaderboard.slice(0, 5).map((e) => ({ display_name: e.display_name, score: e.score, time_seconds: e.time_seconds ?? null }));
 
   return (
     <div className="bg-white border border-amac-blue/5 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-lg shadow-amac-blue/5 flex flex-col">
@@ -296,7 +296,12 @@ function LeaderboardPreview({
                 {entry.display_name}
               </span>
             </div>
-            <span className="font-black text-sm text-amac-blue">{entry.score}</span>
+            <span className="font-black text-sm text-amac-blue">
+              {entry.score}
+              {entry.time_seconds != null && (
+                <span className="text-neutral-400 font-bold text-xs">/{entry.time_seconds}s</span>
+              )}
+            </span>
           </div>
         ))}
       </div>

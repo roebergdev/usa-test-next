@@ -97,6 +97,7 @@ function DailyGameApp({
           onGoToLobby={onBack}
           onPlayPractice={onPlayPractice}
           streak={game.streak}
+          totalSeconds={game.totalSeconds}
         />
       )}
     </AnimatePresence>

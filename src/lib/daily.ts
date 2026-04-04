@@ -63,6 +63,7 @@ export interface DailyResult {
   date: string;
   score: number;
   totalQuestions: number;
+  timeSeconds?: number;
 }
 
 export function getDailyResult(): DailyResult | null {
@@ -76,9 +77,9 @@ export function getDailyResult(): DailyResult | null {
   }
 }
 
-export function saveDailyResultLocal(score: number, totalQuestions: number): void {
+export function saveDailyResultLocal(score: number, totalQuestions: number, timeSeconds?: number): void {
   if (typeof window === 'undefined') return;
-  const result: DailyResult = { date: getTodayString(), score, totalQuestions };
+  const result: DailyResult = { date: getTodayString(), score, totalQuestions, timeSeconds };
   localStorage.setItem(DAILY_STORAGE_PREFIX + getTodayString(), JSON.stringify(result));
 }
 

@@ -30,49 +30,49 @@ export function useDailyGame() {
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [alreadyPlayed, setAlreadyPlayed] = useState<DailyResult | null>(null);
   const [streak, setStreak] = useState(0);
+  // Total seconds taken across all questions — used for leaderboard tiebreaking.
+  const [totalSeconds, setTotalSeconds] = useState<number | null>(null);
 
   // Refs to prevent stale closures in setTimeout callbacks
   const gameStateRef = useRef(gameState);
   const currentQuestionIndexRef = useRef(currentQuestionIndex);
   const questionsRef = useRef(questions);
   const scoreRef = useRef(score);
+  const timeLeftRef = useRef(timeLeft);
+
+  // Accumulates seconds used per question. Summed in persistResult.
+  const questionTimesRef = useRef<number[]>([]);
 
   // Holds the session_id returned by /api/session once fetched on mount.
-  // Used for the daily_results insert — avoids depending on localStorage.
   const sessionIdRef = useRef<string | null>(null);
 
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
   useEffect(() => { questionsRef.current = questions; }, [questions]);
   useEffect(() => { scoreRef.current = score; }, [score]);
+  useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
 
   // Fetch the session_id from the server on mount.
-  // The session_id lives in an HTTP-only cookie (set by middleware) so the
-  // browser can't read it directly. /api/session reads it server-side and
-  // returns it; it also upserts the sessions DB row.
   useEffect(() => {
     fetch('/api/session')
       .then((r) => r.json())
       .then(({ sessionId }: { sessionId: string }) => {
         sessionIdRef.current = sessionId;
       })
-      .catch(() => {
-        // Non-fatal: daily_results will insert with a null session_id.
-      });
+      .catch(() => {});
   }, []);
 
   // Restore state from localStorage on mount.
-  // If the user already completed today's quiz, jump straight to 'gameOver'
-  // so DailyGameApp immediately shows the results/save screen.
   useEffect(() => {
     const result = getDailyResult();
     if (result) {
-      const qs = getDailyQuestions(); // deterministic — same result for today's seed
+      const qs = getDailyQuestions();
       setQuestions(qs);
       setScore(result.score);
       setScoreSaved(hasSavedScore());
       setStreak(getStreak());
       setAlreadyPlayed(result);
+      if (result.timeSeconds !== undefined) setTotalSeconds(result.timeSeconds);
       setGameState('gameOver');
     }
   }, []);
@@ -86,7 +86,8 @@ export function useDailyGame() {
       return () => clearTimeout(timer);
     }
 
-    // Time's up — show wrong answer state; user must click Continue
+    // Time's up — record full TIMER_SECONDS for this question, show wrong state
+    questionTimesRef.current.push(TIMER_SECONDS);
     setSelectedAnswer('');
     setIsCorrect(false);
     playSound(false);
@@ -104,10 +105,15 @@ export function useDailyGame() {
 
   const persistResult = useCallback(
     (finalScore: number, totalQuestions: number) => {
-      saveDailyResultLocal(finalScore, totalQuestions);
+      // Sum per-question times. Each entry is seconds used (TIMER_SECONDS - timeLeft
+      // at answer time, or TIMER_SECONDS for a timeout).
+      const seconds = questionTimesRef.current.reduce((a, b) => a + b, 0);
+
+      saveDailyResultLocal(finalScore, totalQuestions, seconds);
       const streakCount = getStreak();
-      setAlreadyPlayed({ date: getTodayString(), score: finalScore, totalQuestions });
+      setAlreadyPlayed({ date: getTodayString(), score: finalScore, totalQuestions, timeSeconds: seconds });
       setStreak(streakCount);
+      setTotalSeconds(seconds);
 
       track('daily_quiz_completed', {
         quiz_mode: 'daily',
@@ -117,23 +123,20 @@ export function useDailyGame() {
         date: getTodayString(),
       });
 
-      // Insert daily result using the cookie-backed session_id.
-      // user_id is left null here; /api/identity backfills it after the user
-      // submits their contact info.
       supabase
         .from('daily_results')
         .insert({
           quiz_date: getTodayString(),
-          session_id: sessionIdRef.current, // null if session fetch failed
+          session_id: sessionIdRef.current,
           score: finalScore,
           total_questions: totalQuestions,
+          time_seconds: seconds,
         })
         .then(() => {});
     },
     [supabase]
   );
 
-  // Explicit score param avoids relying on stale refs after setScore
   const advanceOrEnd = useCallback(
     (currentScore: number) => {
       const idx = currentQuestionIndexRef.current;
@@ -159,10 +162,12 @@ export function useDailyGame() {
     setQuestions(qs);
     setCurrentQuestionIndex(0);
     setScore(0);
+    setTotalSeconds(null);
     setScoreSaved(false);
     setSelectedAnswer(null);
     setIsCorrect(null);
     setTimeLeft(TIMER_SECONDS);
+    questionTimesRef.current = [];
     setGameState('playing');
 
     track('daily_quiz_started', {
@@ -178,6 +183,9 @@ export function useDailyGame() {
     const currentQ = questionsRef.current[currentQuestionIndexRef.current];
     if (!currentQ) return;
 
+    // Record seconds used for this question before state updates clear timeLeft.
+    questionTimesRef.current.push(TIMER_SECONDS - timeLeftRef.current);
+
     const correct = answer === currentQ.correctAnswer;
     const newScore = scoreRef.current + (correct ? 1 : 0);
 
@@ -185,7 +193,6 @@ export function useDailyGame() {
     setIsCorrect(correct);
     playSound(correct);
     if (correct) setScore(newScore);
-    // User must click Continue to advance
   };
 
   const continueToNext = useCallback(() => {
@@ -193,20 +200,6 @@ export function useDailyGame() {
     advanceOrEnd(scoreRef.current);
   }, [advanceOrEnd]);
 
-  /**
-   * saveDailyContact — called when the user submits the "Claim My Spot" form.
-   *
-   * Delegates to POST /api/identity which handles:
-   *   - user upsert/lookup by normalized phone
-   *   - session → user linking
-   *   - daily_results user_id backfill
-   *   - leaderboard insert
-   *   - leads insert
-   *   - SMS notification (if consented)
-   *
-   * The HTTP-only session_id cookie is read server-side by the API route —
-   * we do not pass it in the request body.
-   */
   const saveDailyContact = async (
     firstName: string,
     lastInitial: string,
@@ -225,6 +218,7 @@ export function useDailyGame() {
         smsConsent,
         score,
         totalQuestions: questionsRef.current.length,
+        timeSeconds: totalSeconds,
         streak: getStreak(),
       }),
     });
@@ -236,7 +230,7 @@ export function useDailyGame() {
     }
 
     setScoreSaved(true);
-    markScoreSaved(); // persist across page reloads
+    markScoreSaved();
 
     track('user_info_submitted', {
       quiz_mode: 'daily',
@@ -258,6 +252,7 @@ export function useDailyGame() {
     totalQuestions: questions.length,
     alreadyPlayed,
     streak,
+    totalSeconds,
     startGame,
     handleAnswer,
     continueToNext,
