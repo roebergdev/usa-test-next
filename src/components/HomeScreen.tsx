@@ -82,7 +82,7 @@ function DailyQuizHero({
             </span>
           </h2>
           <p className="text-neutral-500 font-medium text-sm sm:text-base max-w-md">
-            {DAILY_QUIZ_QUESTIONS} questions &middot; under a minute &middot; Same quiz for everyone today
+            {DAILY_QUIZ_QUESTIONS}{' '}questions &middot; under a minute &middot; Same quiz for everyone today
           </p>
         </div>
 
