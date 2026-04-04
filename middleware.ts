@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { randomUUID } from 'crypto';
+
 
 /**
  * Session cookie name. Must match the constant used in /api/session and
@@ -45,7 +45,7 @@ export function middleware(request: NextRequest) {
   }
 
   // First visit: generate and stamp a new session_id.
-  const sessionId = randomUUID();
+  const sessionId = crypto.randomUUID();
 
   response.cookies.set(SESSION_COOKIE, sessionId, {
     httpOnly: true,
