@@ -98,6 +98,8 @@ function DailyGameApp({
           onPlayPractice={onPlayPractice}
           streak={game.streak}
           totalSeconds={game.totalSeconds}
+          questions={game.questions}
+          userAnswers={game.userAnswers}
         />
       )}
     </AnimatePresence>

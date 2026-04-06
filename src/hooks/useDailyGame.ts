@@ -31,6 +31,7 @@ export function useDailyGame() {
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const [alreadyPlayed, setAlreadyPlayed] = useState<DailyResult | null>(null);
   const [streak, setStreak] = useState(0);
+  const [userAnswers, setUserAnswers] = useState<string[]>([]);
   // Total seconds taken across all questions — used for leaderboard tiebreaking.
   const [totalSeconds, setTotalSeconds] = useState<number | null>(null);
 
@@ -43,6 +44,7 @@ export function useDailyGame() {
 
   // Accumulates seconds used per question. Summed in persistResult.
   const questionTimesRef = useRef<number[]>([]);
+  const userAnswersRef = useRef<string[]>(userAnswers);
 
   // Holds the session_id returned by /api/session once fetched on mount.
   const sessionIdRef = useRef<string | null>(null);
@@ -52,6 +54,7 @@ export function useDailyGame() {
   useEffect(() => { questionsRef.current = questions; }, [questions]);
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
+  useEffect(() => { userAnswersRef.current = userAnswers; }, [userAnswers]);
 
   // Fetch the session_id from the server on mount.
   useEffect(() => {
@@ -74,6 +77,7 @@ export function useDailyGame() {
       setStreak(getStreak());
       setAlreadyPlayed(result);
       if (result.timeSeconds !== undefined) setTotalSeconds(result.timeSeconds);
+      if (result.userAnswers) setUserAnswers(result.userAnswers);
       setGameState('gameOver');
     }
   }, []);
@@ -89,6 +93,7 @@ export function useDailyGame() {
 
     // Time's up — record full TIMER_SECONDS for this question, show wrong state
     questionTimesRef.current.push(TIMER_SECONDS);
+    setUserAnswers((prev) => [...prev, '']);
     setSelectedAnswer('');
     setIsCorrect(false);
     playSound(false);
@@ -110,7 +115,7 @@ export function useDailyGame() {
       // at answer time, or TIMER_SECONDS for a timeout).
       const seconds = questionTimesRef.current.reduce((a, b) => a + b, 0);
 
-      saveDailyResultLocal(finalScore, totalQuestions, seconds);
+      saveDailyResultLocal(finalScore, totalQuestions, seconds, userAnswersRef.current);
       const streakCount = getStreak();
       setAlreadyPlayed({ date: getTodayString(), score: finalScore, totalQuestions, timeSeconds: seconds });
       setStreak(streakCount);
@@ -168,6 +173,7 @@ export function useDailyGame() {
     setSelectedAnswer(null);
     setIsCorrect(null);
     setTimeLeft(TIMER_SECONDS);
+    setUserAnswers([]);
     questionTimesRef.current = [];
     setGameState('playing');
 
@@ -190,6 +196,7 @@ export function useDailyGame() {
     const correct = answer === currentQ.correctAnswer;
     const newScore = scoreRef.current + (correct ? 1 : 0);
 
+    setUserAnswers((prev) => [...prev, answer]);
     setSelectedAnswer(answer);
     setIsCorrect(correct);
     playSound(correct);
@@ -257,6 +264,7 @@ export function useDailyGame() {
     alreadyPlayed,
     streak,
     totalSeconds,
+    userAnswers,
     startGame,
     handleAnswer,
     continueToNext,

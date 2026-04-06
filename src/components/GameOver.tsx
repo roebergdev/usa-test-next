@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getRank } from '@/lib/constants';
-import { QuizMode } from '@/lib/types';
+import { QuizMode, Question } from '@/lib/types';
 import { track } from '@/lib/analytics';
 import {
   type CaptureFormData,
@@ -54,6 +54,8 @@ interface GameOverProps {
   streak?: number;
   /** Total seconds taken across all questions — used for tiebreaking display */
   totalSeconds?: number | null;
+  questions?: Question[];
+  userAnswers?: string[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -198,6 +200,8 @@ function DailyResults({
   onSaveDailyContact,
   onPlayPractice,
   onGoToLobby,
+  questions = [],
+  userAnswers = [],
 }: {
   score: number;
   totalQuestions: number;
@@ -207,8 +211,11 @@ function DailyResults({
   onSaveDailyContact?: (f: string, l: string, p: string, c: boolean) => Promise<void>;
   onPlayPractice?: () => void;
   onGoToLobby: () => void;
+  questions?: Question[];
+  userAnswers?: string[];
 }) {
   const [showCapture, setShowCapture] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [form, setForm] = useState<CaptureFormData>({
     firstName: '',
     lastInitial: '',
@@ -331,6 +338,42 @@ function DailyResults({
         )}
       </div>
 
+      {/* ── Save button (above tiles) or success banner ── */}
+      <AnimatePresence mode="wait">
+        {scoreSaved ? (
+          <motion.div
+            key="saved-banner"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-2xl px-4 py-3"
+          >
+            <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-green-700">Score saved!</p>
+              <p className="text-xs font-medium text-green-600">We&apos;ll remind you when tomorrow&apos;s test drops.</p>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div key="save-btn" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <button
+              onClick={() => {
+                setShowCapture(true);
+                track('save_score_clicked', { quiz_mode: 'daily', score, question_count: totalQuestions, streak_count: streak });
+              }}
+              className="group relative w-full"
+            >
+              <div className="absolute -inset-0.5 bg-amac-red rounded-2xl blur opacity-20 group-hover:opacity-35 transition duration-500" />
+              <div className="relative w-full py-4 sm:py-5 bg-amac-red text-white rounded-xl font-black text-base sm:text-lg flex items-center justify-center gap-2.5 hover:bg-amac-red/90 transition-all shadow-xl shadow-amac-red/20 active:scale-[0.98]">
+                <Trophy className="w-5 h-5" />
+                {streak > 1 ? 'Save My Score & Keep My Streak' : 'Save Today\'s Score'}
+              </div>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Streak + personal best row — matches homepage tile style ── */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white border-2 border-amac-blue/10 rounded-2xl p-4 sm:p-5 flex items-center gap-3">
@@ -369,107 +412,41 @@ function DailyResults({
         </div>
       </div>
 
-      {/* ── CTA area ── */}
-      <AnimatePresence mode="wait">
-        {scoreSaved ? (
-          /* Success state */
-          <motion.div
-            key="success"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-amac-blue/5 rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-xl shadow-amac-blue/5 text-center space-y-4"
+      {/* ── Secondary actions ── */}
+      <div className="flex gap-3">
+        <button
+          onClick={() => setShowResults(true)}
+          className="flex-1 py-3.5 bg-amac-blue/10 text-amac-blue rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/20 transition-all active:scale-[0.98] border border-amac-blue/10"
+        >
+          <span>📋</span>
+          View Results
+        </button>
+        {onPlayPractice && (
+          <button
+            onClick={onPlayPractice}
+            className="flex-1 py-3.5 bg-amac-blue/10 text-amac-blue rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/20 transition-all active:scale-[0.98] border border-amac-blue/10"
           >
-            <div className="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-7 h-7 text-green-600" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-2xl sm:text-3xl font-black tracking-tighter text-amac-dark">
-                Score saved.
-              </h3>
-              <p className="text-sm sm:text-base font-bold text-neutral-500">
-                We&apos;ll remind you when tomorrow&apos;s quiz drops.
-              </p>
-              <p className="text-sm font-medium text-neutral-400">
-                Keep the streak alive — new quiz every day.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              {onPlayPractice && (
-                <button
-                  onClick={onPlayPractice}
-                  className="flex-1 py-3.5 bg-amac-blue text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/90 transition-all active:scale-[0.98]"
-                >
-                  <span>🧠</span>
-                  Practice More
-                </button>
-              )}
-              <button
-                onClick={onGoToLobby}
-                className="flex-1 py-3.5 bg-amac-gray text-neutral-500 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-neutral-200 transition-all active:scale-[0.98]"
-              >
-                <Home className="w-4 h-4" />
-                Home
-              </button>
-            </div>
-          </motion.div>
-        ) : (
-          /* Default CTAs — primary: save progress; secondary: practice, home */
-          <motion.div
-            key="ctas"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-3"
-          >
-            <button
-              onClick={() => {
-                setShowCapture(true);
-                track('save_score_clicked', {
-                  quiz_mode: 'daily',
-                  score,
-                  question_count: totalQuestions,
-                  streak_count: streak,
-                });
-              }}
-              className="group relative w-full"
-            >
-              <div className="absolute -inset-0.5 bg-amac-red rounded-2xl blur opacity-20 group-hover:opacity-35 transition duration-500" />
-              <div className="relative w-full py-4 sm:py-5 bg-amac-red text-white rounded-xl font-black text-base sm:text-lg flex items-center justify-center gap-2.5 hover:bg-amac-red/90 transition-all shadow-xl shadow-amac-red/20 active:scale-[0.98]">
-                <Trophy className="w-5 h-5" />
-                {streak > 1 ? `Save My Score & Keep My Streak` : 'Save Today\'s Score'}
-              </div>
-            </button>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              {onPlayPractice && (
-                <button
-                  onClick={onPlayPractice}
-                  className="flex-1 py-3.5 bg-amac-blue/10 text-amac-blue rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/20 transition-all active:scale-[0.98] border border-amac-blue/10"
-                >
-                  <span>🧠</span>
-                  Practice More
-                </button>
-              )}
-              <button
-                onClick={onGoToLobby}
-                className="flex-1 py-3.5 bg-amac-gray text-neutral-500 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-neutral-200 transition-all active:scale-[0.98]"
-              >
-                <Home className="w-4 h-4" />
-                Home
-              </button>
-            </div>
-
-            <button
-              onClick={() => {
-                track('leaderboard_preview_shown', { quiz_mode: 'daily', score });
-                onGoToLobby();
-              }}
-              className="w-full text-center text-xs text-neutral-400 hover:text-amac-blue font-bold transition-colors pt-1"
-            >
-              View today&apos;s leaderboard →
-            </button>
-          </motion.div>
+            <span>🧠</span>
+            Practice More
+          </button>
         )}
-      </AnimatePresence>
+        <button
+          onClick={onGoToLobby}
+          className="flex-1 py-3.5 bg-amac-gray text-neutral-500 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-neutral-200 transition-all active:scale-[0.98]"
+        >
+          <Home className="w-4 h-4" />
+          Home
+        </button>
+      </div>
+
+      {!scoreSaved && (
+        <button
+          onClick={() => { track('leaderboard_preview_shown', { quiz_mode: 'daily', score }); onGoToLobby(); }}
+          className="w-full text-center text-xs text-neutral-400 hover:text-amac-blue font-bold transition-colors pt-1"
+        >
+          View today&apos;s leaderboard →
+        </button>
+      )}
 
       <div className="text-center space-y-1 pb-2">
         <p className="text-3xl font-black text-amac-dark tabular-nums tracking-tight">{countdown}</p>
@@ -644,6 +621,85 @@ function DailyResults({
         </>
       )}
     </AnimatePresence>
+
+    {/* ── Bottom sheet: results review ── */}
+    <AnimatePresence>
+      {showResults && (
+        <>
+          <motion.div
+            key="results-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setShowResults(false)}
+          />
+          <motion.div
+            key="results-sheet"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-neutral-200 rounded-full" />
+            </div>
+            <div className="p-5 sm:p-8 pb-10 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-black text-amac-dark text-lg">Today&apos;s Results</h3>
+                <span className="text-sm font-black text-amac-blue">{score}/{totalQuestions}</span>
+              </div>
+              {questions.length === 0 ? (
+                <p className="text-sm text-neutral-400 font-medium text-center py-8">Results not available.</p>
+              ) : (
+                <div className="space-y-3">
+                  {questions.map((q, i) => {
+                    const userAnswer = userAnswers[i];
+                    const timedOut = userAnswer === '';
+                    const correct = userAnswer === q.correctAnswer;
+                    return (
+                      <div
+                        key={q.id}
+                        className={`rounded-2xl border p-4 space-y-2 ${
+                          correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className={`text-xs font-black shrink-0 mt-0.5 ${correct ? 'text-green-600' : 'text-red-500'}`}>
+                            {correct ? '✓' : '✗'}
+                          </span>
+                          <p className="text-sm font-black text-amac-dark leading-snug">{q.text}</p>
+                        </div>
+                        {!correct && (
+                          <div className="pl-4 space-y-1">
+                            <p className="text-xs font-medium text-red-500">
+                              Your answer: <span className="font-black">{timedOut ? "Time's up" : userAnswer || '—'}</span>
+                            </p>
+                            <p className="text-xs font-medium text-green-700">
+                              Correct: <span className="font-black">{q.correctAnswer}</span>
+                            </p>
+                          </div>
+                        )}
+                        {correct && (
+                          <p className="pl-4 text-xs font-black text-green-700">{q.correctAnswer}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <button
+                onClick={() => setShowResults(false)}
+                className="w-full py-3.5 bg-amac-gray text-neutral-500 rounded-xl font-black text-sm hover:bg-neutral-200 transition-all mt-2"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
     </>
   );
 }
@@ -782,6 +838,8 @@ export function GameOver({
   playerName = '',
   streak = 0,
   totalSeconds,
+  questions,
+  userAnswers,
 }: GameOverProps) {
   if (mode === 'daily') {
     return (
@@ -794,6 +852,8 @@ export function GameOver({
         onSaveDailyContact={onSaveDailyContact}
         onPlayPractice={onPlayPractice}
         onGoToLobby={onGoToLobby}
+        questions={questions}
+        userAnswers={userAnswers}
       />
     );
   }
