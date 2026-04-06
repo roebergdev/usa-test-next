@@ -124,23 +124,6 @@ export function GameBoard({
         </h3>
       </motion.div>
 
-      {/* Factoid — appears above answer grid once answered */}
-      <AnimatePresence>
-        {answered && hasExplanation && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="bg-amac-blue/5 border border-amac-blue/10 rounded-2xl p-4 sm:p-5 flex items-start gap-3"
-          >
-            <span className="text-lg shrink-0">💡</span>
-            <p className="text-sm text-amac-dark/80 leading-relaxed font-medium">
-              {question.explanation}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Answer grid */}
       <div className="grid sm:grid-cols-2 gap-2.5 sm:gap-3">
         {shuffledOptions.map((option, i) => {
@@ -220,6 +203,15 @@ export function GameBoard({
                 )}
               </div>
             </div>
+
+            {hasExplanation && (
+              <div className="bg-white/60 rounded-xl p-3 sm:p-4 flex items-start gap-2.5 border border-black/5">
+                <span className="text-base shrink-0">💡</span>
+                <p className="text-sm text-neutral-700 leading-relaxed font-medium">
+                  {question.explanation}
+                </p>
+              </div>
+            )}
 
             {hasExplanation && (
               <button
