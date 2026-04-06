@@ -212,18 +212,14 @@ function StreakCard({
 
   // State 4: No streak, not played
   return (
-    <div className="bg-white border border-amac-blue/5 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-lg shadow-amac-blue/5 space-y-3">
-      <div className="flex items-center gap-2">
-        <span className="text-lg">🔥</span>
-        <span className="text-xs font-black uppercase tracking-widest text-orange-400">Daily Streak</span>
-      </div>
-      <div>
-        <div className="text-4xl sm:text-5xl font-black tracking-tighter text-orange-200 leading-none">
-          —
+    <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 sm:p-8 shadow-md">
+      <div className="flex items-center gap-4 sm:gap-5">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-orange-50 rounded-2xl flex items-center justify-center shrink-0">
+          <span className="text-2xl sm:text-3xl">🔥</span>
         </div>
-        <p className="text-xs sm:text-sm font-medium text-orange-300 mt-1.5">
-          Play daily to build your streak.
-        </p>
+        <div className="font-black text-base sm:text-lg text-orange-400 tracking-tight">
+          Daily Streak
+        </div>
       </div>
     </div>
   );
