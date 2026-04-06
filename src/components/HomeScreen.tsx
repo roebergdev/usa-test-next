@@ -214,10 +214,10 @@ function StreakCard({
   return (
     <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 sm:p-8 shadow-md">
       <div className="flex items-center gap-4 sm:gap-5">
-        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-orange-50 rounded-2xl flex items-center justify-center shrink-0">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-amac-blue/5 rounded-2xl flex items-center justify-center shrink-0">
           <span className="text-2xl sm:text-3xl">🔥</span>
         </div>
-        <div className="font-black text-base sm:text-lg text-orange-400 tracking-tight">
+        <div className="font-black text-base sm:text-lg text-amac-red tracking-tight">
           Daily Streak
         </div>
       </div>
@@ -246,13 +246,13 @@ function LeaderboardPreview({
     : leaderboard.slice(0, 5).map((e) => ({ display_name: e.display_name, score: e.score, time_seconds: e.time_seconds ?? null }));
 
   return (
-    <div className="bg-white border border-amac-blue/5 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-lg shadow-amac-blue/5 flex flex-col">
+    <div className="bg-white border-2 border-amac-blue/10 rounded-2xl p-6 sm:p-8 shadow-md flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2.5 mb-4">
-        <div className="w-7 h-7 bg-yellow-400/15 rounded-lg flex items-center justify-center">
-          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+      <div className="flex items-center gap-4 sm:gap-5 mb-4">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-amac-blue/5 rounded-2xl flex items-center justify-center shrink-0">
+          <span className="text-2xl sm:text-3xl">🏆</span>
         </div>
-        <span className="font-black text-sm uppercase tracking-widest text-amac-dark">
+        <span className="font-black text-base sm:text-lg text-amac-dark tracking-tight">
           Today&apos;s Leaderboard
         </span>
         {isPlaceholder && (
