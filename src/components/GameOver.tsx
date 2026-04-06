@@ -294,10 +294,11 @@ function DailyResults({
   };
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="max-w-xl mx-auto space-y-3 sm:space-y-4 py-6 sm:py-10"
+      className="max-w-xl mx-auto space-y-3 sm:space-y-4 py-2 sm:py-4"
     >
       {/* ── Score hero — matches main tile style ── */}
       <div className="bg-white rounded-3xl border-2 border-amac-blue/10 shadow-xl shadow-amac-blue/5 p-7 sm:p-10">
@@ -411,168 +412,6 @@ function DailyResults({
               </button>
             </div>
           </motion.div>
-        ) : showCapture ? (
-          /* Capture form — framed around saving progress, not joining a leaderboard */
-          <motion.div
-            key="capture"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white border border-amac-blue/10 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-xl shadow-amac-blue/5 space-y-5"
-          >
-            <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <Trophy className="w-4 h-4 text-amac-blue" />
-                <h3 className="font-black text-amac-dark text-base sm:text-lg">Save Your Progress</h3>
-              </div>
-              {previewName && (
-                <p className="text-sm text-neutral-400 font-medium">
-                  Saved as:{' '}
-                  <span className="font-black text-amac-dark">{previewName}</span>
-                </p>
-              )}
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              {/* Name row */}
-              <div className="flex gap-3">
-                <Field label="First Name" error={errors.firstName}>
-                  <input
-                    type="text"
-                    autoComplete="given-name"
-                    placeholder="John"
-                    maxLength={30}
-                    value={form.firstName}
-                    onChange={(e) =>
-                      updateField('firstName', normalizeFirstName(e.target.value) || e.target.value)
-                    }
-                    onBlur={(e) => updateField('firstName', normalizeFirstName(e.target.value))}
-                    className={`${inputCls(!!errors.firstName)} flex-1`}
-                  />
-                </Field>
-
-                <Field label="Last Initial" error={errors.lastInitial}>
-                  <input
-                    type="text"
-                    autoComplete="off"
-                    placeholder="S"
-                    maxLength={1}
-                    value={form.lastInitial}
-                    onChange={(e) =>
-                      updateField('lastInitial', normalizeLastInitial(e.target.value))
-                    }
-                    className={`${inputCls(!!errors.lastInitial)} w-16 text-center`}
-                  />
-                </Field>
-              </div>
-
-              {/* Phone */}
-              <Field label="Phone Number" error={errors.phone}>
-                <input
-                  type="tel"
-                  autoComplete="tel"
-                  placeholder="(555) 000-0000"
-                  value={form.phone}
-                  onChange={(e) => updateField('phone', formatPhoneDisplay(e.target.value))}
-                  className={inputCls(!!errors.phone)}
-                />
-              </Field>
-
-              {/* Benefits */}
-              <ul className="space-y-1.5 py-1">
-                {[
-                  'Your score is saved and tracked over time',
-                  streak > 1
-                    ? `Protect your ${streak}-day streak`
-                    : 'Start tracking your daily streak',
-                  'Get occasional heads-ups when quizzes drop',
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-xs text-neutral-600 font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-amac-blue shrink-0 mt-0.5" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-
-              {/* SMS consent */}
-              <div className="space-y-1">
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <div className="relative mt-0.5 shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={form.smsConsent}
-                      onChange={(e) => {
-                        updateField('smsConsent', e.target.checked);
-                        track('sms_consent_checked', {
-                          quiz_mode: 'daily',
-                          checked: e.target.checked,
-                        });
-                      }}
-                      className="sr-only"
-                    />
-                    <div
-                      className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                        form.smsConsent
-                          ? 'bg-amac-blue border-amac-blue'
-                          : errors.smsConsent
-                          ? 'border-amac-red bg-white'
-                          : 'border-neutral-300 bg-white group-hover:border-amac-blue/50'
-                      }`}
-                    >
-                      {form.smsConsent && (
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12">
-                          <path
-                            d="M2 6l3 3 5-5"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-neutral-500 leading-relaxed font-medium">
-                    <MessageSquare className="w-3 h-3 inline-block mr-1 text-amac-blue" />
-                    {SMS_CONSENT_TEXT}
-                  </span>
-                </label>
-                <AnimatePresence>
-                  {errors.smsConsent && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="text-[11px] text-amac-red font-bold pl-8"
-                    >
-                      {errors.smsConsent}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full py-4 bg-amac-red text-white rounded-xl font-black text-base flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all disabled:opacity-50 shadow-lg shadow-amac-red/20 active:scale-[0.98]"
-              >
-                {saving ? 'Saving...' : 'Save My Score'}
-                {!saving && <ChevronRight className="w-4 h-4" />}
-              </button>
-            </form>
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowCapture(false);
-                setSubmitted(false);
-                setErrors({});
-              }}
-              className="w-full text-center text-xs text-neutral-400 hover:text-neutral-600 font-bold transition-colors"
-            >
-              Cancel
-            </button>
-          </motion.div>
         ) : (
           /* Default CTAs — primary: save progress; secondary: practice, home */
           <motion.div
@@ -619,7 +458,6 @@ function DailyResults({
               </button>
             </div>
 
-            {/* Secondary leaderboard link — low visual weight */}
             <button
               onClick={() => {
                 track('leaderboard_preview_shown', { quiz_mode: 'daily', score });
@@ -640,6 +478,173 @@ function DailyResults({
         </p>
       </div>
     </motion.div>
+
+    {/* ── Bottom sheet capture form ── */}
+    <AnimatePresence>
+      {showCapture && !scoreSaved && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => { setShowCapture(false); setSubmitted(false); setErrors({}); }}
+          />
+
+          {/* Sheet */}
+          <motion.div
+            key="sheet"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto"
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-neutral-200 rounded-full" />
+            </div>
+
+            <div className="p-5 sm:p-8 space-y-5 pb-8">
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <Trophy className="w-4 h-4 text-amac-blue" />
+                  <h3 className="font-black text-amac-dark text-base sm:text-lg">Save Your Progress</h3>
+                </div>
+                {previewName && (
+                  <p className="text-sm text-neutral-400 font-medium">
+                    Saved as: <span className="font-black text-amac-dark">{previewName}</span>
+                  </p>
+                )}
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                <div className="flex gap-3">
+                  <Field label="First Name" error={errors.firstName}>
+                    <input
+                      type="text"
+                      autoComplete="given-name"
+                      placeholder="John"
+                      maxLength={30}
+                      value={form.firstName}
+                      onChange={(e) =>
+                        updateField('firstName', normalizeFirstName(e.target.value) || e.target.value)
+                      }
+                      onBlur={(e) => updateField('firstName', normalizeFirstName(e.target.value))}
+                      className={`${inputCls(!!errors.firstName)} flex-1`}
+                    />
+                  </Field>
+                  <Field label="Last Initial" error={errors.lastInitial}>
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      placeholder="S"
+                      maxLength={1}
+                      value={form.lastInitial}
+                      onChange={(e) =>
+                        updateField('lastInitial', normalizeLastInitial(e.target.value))
+                      }
+                      className={`${inputCls(!!errors.lastInitial)} w-16 text-center`}
+                    />
+                  </Field>
+                </div>
+
+                <Field label="Phone Number" error={errors.phone}>
+                  <input
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="(555) 000-0000"
+                    value={form.phone}
+                    onChange={(e) => updateField('phone', formatPhoneDisplay(e.target.value))}
+                    className={inputCls(!!errors.phone)}
+                  />
+                </Field>
+
+                <ul className="space-y-1.5 py-1">
+                  {[
+                    'Your score is saved and tracked over time',
+                    streak > 1 ? `Protect your ${streak}-day streak` : 'Start tracking your daily streak',
+                    'Get occasional heads-ups when quizzes drop',
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-xs text-neutral-600 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-amac-blue shrink-0 mt-0.5" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="space-y-1">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <div className="relative mt-0.5 shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={form.smsConsent}
+                        onChange={(e) => {
+                          updateField('smsConsent', e.target.checked);
+                          track('sms_consent_checked', { quiz_mode: 'daily', checked: e.target.checked });
+                        }}
+                        className="sr-only"
+                      />
+                      <div
+                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                          form.smsConsent
+                            ? 'bg-amac-blue border-amac-blue'
+                            : errors.smsConsent
+                            ? 'border-amac-red bg-white'
+                            : 'border-neutral-300 bg-white group-hover:border-amac-blue/50'
+                        }`}
+                      >
+                        {form.smsConsent && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12">
+                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <span className="text-[11px] text-neutral-500 leading-relaxed font-medium">
+                      <MessageSquare className="w-3 h-3 inline-block mr-1 text-amac-blue" />
+                      {SMS_CONSENT_TEXT}
+                    </span>
+                  </label>
+                  <AnimatePresence>
+                    {errors.smsConsent && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="text-[11px] text-amac-red font-bold pl-8"
+                      >
+                        {errors.smsConsent}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full py-4 bg-amac-red text-white rounded-xl font-black text-base flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all disabled:opacity-50 shadow-lg shadow-amac-red/20 active:scale-[0.98]"
+                >
+                  {saving ? 'Saving...' : 'Save My Score'}
+                  {!saving && <ChevronRight className="w-4 h-4" />}
+                </button>
+              </form>
+
+              <button
+                type="button"
+                onClick={() => { setShowCapture(false); setSubmitted(false); setErrors({}); }}
+                className="w-full text-center text-xs text-neutral-400 hover:text-neutral-600 font-bold transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
 
