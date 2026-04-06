@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@keyframes pulse-fast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.animate-pulse-fast {
+  animation: pulse-fast 0.8s ease-in-out infinite;
+}
+
 @theme {
   --color-amac-blue: #003366;
   --color-amac-red: #cc0000;
