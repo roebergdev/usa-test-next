@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { motion } from 'motion/react';
 import {
-  CalendarDays,
   Play,
   CheckCircle2,
   Flame,
@@ -20,7 +19,6 @@ import {
   getTodayString,
   type DailyResult,
 } from '@/lib/daily';
-import { DAILY_QUIZ_QUESTIONS } from '@/lib/constants';
 import { track } from '@/lib/analytics';
 
 // ─── Placeholder leaderboard rows ─────────────────────────────────────────────
@@ -63,26 +61,17 @@ function DailyQuizHero({
       <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-amac-blue/8 via-amac-red/4 to-transparent rounded-full blur-[80px] pointer-events-none" />
 
       <div className="relative space-y-5 sm:space-y-7">
-        {/* Badge + date */}
-        <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amac-blue/5 border border-amac-blue/10 rounded-full text-[9px] sm:text-[10px] text-amac-blue font-black uppercase tracking-[0.2em]">
-            <CalendarDays className="w-3 h-3" />
-            Today&apos;s Quiz
-          </div>
-          <p className="text-base sm:text-lg font-black text-amac-dark/70 tracking-tight">{today}</p>
-        </div>
+        {/* Date */}
+        <p className="text-base sm:text-lg font-black text-amac-dark/70 tracking-tight">{today}</p>
 
         {/* Headline */}
-        <div className="space-y-2">
+        <div>
           <h2 className="text-4xl sm:text-6xl font-black tracking-tighter leading-[0.9] uppercase text-amac-dark">
             Test your{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amac-blue to-amac-red">
               Knowledge.
             </span>
           </h2>
-          <p className="text-neutral-500 font-medium text-sm sm:text-base max-w-md">
-            {DAILY_QUIZ_QUESTIONS}{' '}questions &middot; under a minute &middot; Same quiz for everyone today
-          </p>
         </div>
 
         {/* State 1: not played */}
