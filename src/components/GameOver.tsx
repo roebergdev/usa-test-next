@@ -636,7 +636,7 @@ function DailyResults({
       <div className="text-center space-y-1 pb-2">
         <p className="text-3xl font-black text-amac-dark tabular-nums tracking-tight">{countdown}</p>
         <p className="text-xs font-black text-neutral-400 uppercase tracking-widest">
-          until next quiz &mdash; same time, different questions
+          until next test &mdash; same time, different questions
         </p>
       </div>
     </motion.div>
