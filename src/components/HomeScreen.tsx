@@ -41,6 +41,33 @@ interface HomeScreenProps {
 
 // ─── Daily Quiz Hero ──────────────────────────────────────────────────────────
 
+function Typewriter({ text, speed = 80 }: { text: string; speed?: number }) {
+  const [displayed, setDisplayed] = useState('');
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    setDisplayed('');
+    setDone(false);
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) {
+        clearInterval(interval);
+        setDone(true);
+      }
+    }, speed);
+    return () => clearInterval(interval);
+  }, [text, speed]);
+
+  return (
+    <span>
+      {displayed}
+      <span className={done ? 'animate-pulse-fast' : ''}>|</span>
+    </span>
+  );
+}
+
 function DailyQuizHero({
   dailyResult,
   scoreSaved,
@@ -78,10 +105,9 @@ function DailyQuizHero({
         {!dailyResult && (
           <button onClick={onPlayDaily} className="group relative w-full sm:w-fit mb-4 sm:mb-6">
             <div className="absolute -inset-1 bg-amac-red rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500" />
-            <div className="relative px-8 sm:px-14 py-4 sm:py-5 bg-amac-red text-white rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl flex items-center justify-center gap-3 hover:bg-amac-red/90 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-xl shadow-amac-red/25 animate-pulse-fast">
+            <div className="relative px-8 sm:px-14 py-4 sm:py-5 bg-amac-red text-white rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl flex items-center justify-center gap-3 hover:bg-amac-red/90 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-xl shadow-amac-red/25">
               <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
-              Let&apos;s Go
-              <ChevronRight className="w-4 h-4 opacity-70" />
+              <Typewriter text="Let's Go" speed={80} />
             </div>
           </button>
         )}
