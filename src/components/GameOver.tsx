@@ -239,7 +239,8 @@ function DailyResults({
   const personalBestMsg = getPersonalBestMessage(score, totalSeconds ?? null, personalBest);
 
   const handleShare = async () => {
-    const name = typeof window !== 'undefined' ? localStorage.getItem('usa_test_display_name') ?? '' : '';
+    const rawName = typeof window !== 'undefined' ? localStorage.getItem('usa_test_display_name') ?? '' : '';
+    const name = rawName.replace(/\.$/, '');
     const params = new URLSearchParams({
       score: String(score),
       total: String(totalQuestions),

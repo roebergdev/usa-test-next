@@ -10,13 +10,12 @@ export async function GET(request: NextRequest) {
   const streak = parseInt(searchParams.get('streak') ?? '0');
   const name = searchParams.get('name') ?? '';
 
-  // Tier label based on score
   function getTier(s: number, t: number) {
     const pct = s / t;
-    if (pct === 1) return { label: 'PERFECT SCORE', color: '#D97706' };
-    if (pct >= 0.8) return { label: 'TOP 25%', color: '#1B3A6B' };
-    if (pct >= 0.6) return { label: 'TOP 50%', color: '#059669' };
-    return { label: 'COMPLETED', color: '#6B7280' };
+    if (pct === 1) return { label: 'Perfect Score!', bg: '#FEF3C7', color: '#D97706', border: '#FCD34D' };
+    if (pct >= 0.8) return { label: 'Top 25%', bg: '#DBEAFE', color: '#1D4ED8', border: '#93C5FD' };
+    if (pct >= 0.6) return { label: 'Above Average', bg: '#DCFCE7', color: '#16A34A', border: '#86EFAC' };
+    return { label: 'Completed', bg: '#F3F4F6', color: '#6B7280', border: '#D1D5DB' };
   }
 
   const tier = getTier(score, total);
@@ -27,126 +26,101 @@ export async function GET(request: NextRequest) {
         style={{
           width: '1200px',
           height: '630px',
-          background: '#0D1B3E',
+          background: '#F8FAFF',
           display: 'flex',
           flexDirection: 'column',
-          position: 'relative',
+          alignItems: 'center',
+          justifyContent: 'center',
           fontFamily: 'system-ui, sans-serif',
+          position: 'relative',
           overflow: 'hidden',
         }}
       >
-        {/* Red top bar */}
-        <div style={{ width: '100%', height: '14px', background: '#C8102E', flexShrink: 0 }} />
+        {/* Background blobs */}
+        <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '340px', height: '340px', background: '#FECACA', borderRadius: '50%', opacity: 0.4 }} />
+        <div style={{ position: 'absolute', bottom: '-60px', left: '-60px', width: '280px', height: '280px', background: '#BFDBFE', borderRadius: '50%', opacity: 0.4 }} />
+        <div style={{ position: 'absolute', top: '60%', right: '10%', width: '160px', height: '160px', background: '#FDE68A', borderRadius: '50%', opacity: 0.35 }} />
 
-        {/* Subtle dot grid decoration */}
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              width: `${6 + (i % 3) * 4}px`,
-              height: `${6 + (i % 3) * 4}px`,
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.05)',
-              top: `${10 + (i * 47) % 580}px`,
-              left: `${(i * 97) % 1180}px`,
-            }}
-          />
-        ))}
-
-        {/* Main content */}
+        {/* Card */}
         <div
           style={{
-            flex: 1,
+            background: '#FFFFFF',
+            borderRadius: '32px',
+            border: '3px solid #E5E7EB',
+            padding: '48px 64px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0px',
-            padding: '0 80px',
+            gap: '20px',
+            boxShadow: '0 8px 0 #D1D5DB',
+            width: '860px',
+            position: 'relative',
           }}
         >
           {/* Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
-            <div style={{ width: '60px', height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }} />
-            <div style={{ display: 'flex', gap: '0px' }}>
-              <span style={{ color: '#FFFFFF', fontSize: '48px', fontWeight: 900, letterSpacing: '-1px' }}>USA&nbsp;</span>
-              <span style={{ color: '#C8102E', fontSize: '48px', fontWeight: 900, letterSpacing: '-1px' }}>TEST</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0px' }}>
+              <span style={{ color: '#1B3A6B', fontSize: '32px', fontWeight: 900, letterSpacing: '-1px' }}>USA&nbsp;</span>
+              <span style={{ color: '#C8102E', fontSize: '32px', fontWeight: 900, letterSpacing: '-1px' }}>TEST</span>
             </div>
-            <div style={{ width: '60px', height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }} />
           </div>
 
           {/* Score */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', lineHeight: 1 }}>
-            <span style={{ color: '#FFFFFF', fontSize: '160px', fontWeight: 900, letterSpacing: '-4px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', lineHeight: 1 }}>
+            <span style={{ color: '#111827', fontSize: '140px', fontWeight: 900, letterSpacing: '-6px' }}>
               {score}
             </span>
-            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '80px', fontWeight: 900 }}>
+            <span style={{ color: '#D1D5DB', fontSize: '72px', fontWeight: 900, letterSpacing: '-2px' }}>
               /{total}
             </span>
           </div>
 
-          {/* Tier + streak row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '16px' }}>
-            <div
-              style={{
-                background: tier.color,
-                color: '#FFFFFF',
-                fontSize: '18px',
-                fontWeight: 900,
-                letterSpacing: '2px',
-                padding: '8px 20px',
-                borderRadius: '999px',
-              }}
-            >
+          {/* Tier badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{
+              background: tier.bg,
+              border: `2px solid ${tier.border}`,
+              color: tier.color,
+              fontSize: '20px',
+              fontWeight: 900,
+              letterSpacing: '1px',
+              padding: '8px 24px',
+              borderRadius: '999px',
+            }}>
               {tier.label}
             </div>
             {streak > 1 && (
-              <div
-                style={{
-                  background: 'rgba(249,115,22,0.2)',
-                  border: '1px solid rgba(249,115,22,0.5)',
-                  color: '#FB923C',
-                  fontSize: '18px',
-                  fontWeight: 900,
-                  padding: '8px 20px',
-                  borderRadius: '999px',
-                }}
-              >
-                {streak}-DAY STREAK
+              <div style={{
+                background: '#FFF7ED',
+                border: '2px solid #FED7AA',
+                color: '#EA580C',
+                fontSize: '20px',
+                fontWeight: 900,
+                padding: '8px 24px',
+                borderRadius: '999px',
+              }}>
+                {streak}-day streak
               </div>
             )}
           </div>
 
-          {/* Name (if provided) */}
+          {/* Name */}
           {name && (
-            <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '22px', fontWeight: 700, marginTop: '20px' }}>
+            <div style={{ color: '#9CA3AF', fontSize: '20px', fontWeight: 700 }}>
               {name}
             </div>
           )}
-
-          {/* Divider */}
-          <div
-            style={{
-              width: '200px',
-              height: '2px',
-              background: 'rgba(255,255,255,0.1)',
-              marginTop: '32px',
-              marginBottom: '24px',
-            }}
-          />
-
-          {/* CTA */}
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '28px', fontWeight: 700, marginBottom: '8px' }}>
-            Think you can beat this?
-          </div>
-          <div style={{ color: '#FFFFFF', fontSize: '36px', fontWeight: 900, letterSpacing: '-0.5px' }}>
-            usatest.co
-          </div>
         </div>
 
-        {/* Red bottom bar */}
-        <div style={{ width: '100%', height: '14px', background: '#C8102E', flexShrink: 0 }} />
+        {/* CTA below card */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', marginTop: '28px' }}>
+          <div style={{ color: '#374151', fontSize: '26px', fontWeight: 900 }}>
+            Think you can beat this?
+          </div>
+          <div style={{ color: '#C8102E', fontSize: '22px', fontWeight: 900, letterSpacing: '-0.5px' }}>
+            usatest.co — free daily test
+          </div>
+        </div>
       </div>
     ),
     { width: 1200, height: 630 }

@@ -56,7 +56,8 @@ function DailyQuizHero({
 
   const handleShare = async () => {
     if (!dailyResult) return;
-    const name = typeof window !== 'undefined' ? localStorage.getItem('usa_test_display_name') ?? '' : '';
+    const rawName = typeof window !== 'undefined' ? localStorage.getItem('usa_test_display_name') ?? '' : '';
+    const name = rawName.replace(/\.$/, '');
     const params = new URLSearchParams({
       score: String(dailyResult.score),
       total: String(dailyResult.totalQuestions),
