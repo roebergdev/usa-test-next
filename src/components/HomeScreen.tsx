@@ -267,6 +267,12 @@ function LeaderboardPreview({
         )}
       </div>
 
+      {/* Column headers */}
+      <div className="flex items-center justify-between px-2.5 pb-1 mb-1 border-b border-neutral-100">
+        <span className="text-[9px] font-black uppercase tracking-widest text-neutral-300">Player</span>
+        <span className="text-[9px] font-black uppercase tracking-widest text-neutral-300">Score / Time</span>
+      </div>
+
       {/* Rows */}
       <div className="space-y-1 flex-1">
         {rows.map((entry, i) => {
