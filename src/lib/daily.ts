@@ -155,6 +155,20 @@ export function markScoreSaved(): void {
   localStorage.setItem(SCORE_SAVED_PREFIX + getTodayString(), '1');
 }
 
+const USER_DISPLAY_NAME_KEY = 'usa_test_display_name';
+
+/** Persists the user's display name after a successful identity capture. */
+export function saveUserDisplayName(displayName: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(USER_DISPLAY_NAME_KEY, displayName);
+}
+
+/** Returns the saved display name, or empty string if none. */
+export function getUserDisplayName(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem(USER_DISPLAY_NAME_KEY) ?? '';
+}
+
 export interface PersonalBest {
   bestScore: number;
   bestTimeSeconds: number | null;

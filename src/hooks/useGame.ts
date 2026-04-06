@@ -5,6 +5,7 @@ import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
 import { useQuestions } from '@/hooks/useQuestions';
 import { Question } from '@/lib/types';
 import { TIMER_SECONDS, TOTAL_QUESTIONS } from '@/lib/constants';
+import { getUserDisplayName } from '@/lib/daily';
 import { track } from '@/lib/analytics';
 
 export function useGame() {
@@ -163,6 +164,7 @@ export function useGame() {
     isCorrect,
     timeLeft,
     totalQuestions: questions.length,
+    playerName: getUserDisplayName(),
     startGame,
     handleAnswer,
     continueToNext,

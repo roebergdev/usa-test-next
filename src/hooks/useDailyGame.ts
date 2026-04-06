@@ -11,6 +11,7 @@ import {
   hasPlayedToday,
   hasSavedScore,
   markScoreSaved,
+  saveUserDisplayName,
   getStreak,
   getTodayString,
   type DailyResult,
@@ -231,6 +232,9 @@ export function useDailyGame() {
 
     setScoreSaved(true);
     markScoreSaved();
+    // Persist display name so practice mode can pre-fill the save form
+    const displayName = `${firstName.trim()} ${lastInitial.trim().toUpperCase()}.`.trim();
+    saveUserDisplayName(displayName);
 
     track('user_info_submitted', {
       quiz_mode: 'daily',

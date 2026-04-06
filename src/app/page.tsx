@@ -145,6 +145,7 @@ function PracticeGameApp({ onBack }: { onBack: () => void }) {
           onGoToLobby={onBack}
           onSaveScore={game.saveScoreWithName}
           scoreSaved={game.scoreSaved}
+          playerName={game.playerName}
         />
       )}
     </AnimatePresence>
