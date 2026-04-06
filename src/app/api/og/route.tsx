@@ -38,20 +38,20 @@ export async function GET(request: NextRequest) {
         {/* Red top bar */}
         <div style={{ width: '100%', height: '14px', background: '#C8102E', flexShrink: 0 }} />
 
-        {/* Star field decoration */}
+        {/* Subtle dot grid decoration */}
         {[...Array(12)].map((_, i) => (
           <div
             key={i}
             style={{
               position: 'absolute',
-              color: 'rgba(255,255,255,0.08)',
-              fontSize: `${20 + (i % 3) * 14}px`,
+              width: `${6 + (i % 3) * 4}px`,
+              height: `${6 + (i % 3) * 4}px`,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.05)',
               top: `${10 + (i * 47) % 580}px`,
               left: `${(i * 97) % 1180}px`,
             }}
-          >
-            *
-          </div>
+          />
         ))}
 
         {/* Main content */}
@@ -67,13 +67,13 @@ export async function GET(request: NextRequest) {
           }}
         >
           {/* Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ display: 'flex', color: 'rgba(255,255,255,0.4)', fontSize: '28px' }}>★ ★ ★</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
+            <div style={{ width: '60px', height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }} />
             <div style={{ display: 'flex', gap: '0px' }}>
               <span style={{ color: '#FFFFFF', fontSize: '48px', fontWeight: 900, letterSpacing: '-1px' }}>USA&nbsp;</span>
               <span style={{ color: '#C8102E', fontSize: '48px', fontWeight: 900, letterSpacing: '-1px' }}>TEST</span>
             </div>
-            <div style={{ display: 'flex', color: 'rgba(255,255,255,0.4)', fontSize: '28px' }}>★ ★ ★</div>
+            <div style={{ width: '60px', height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }} />
           </div>
 
           {/* Score */}
