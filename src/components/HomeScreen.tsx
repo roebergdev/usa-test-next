@@ -51,6 +51,26 @@ function DailyQuizHero({
   onPlayDaily: () => void;
 }) {
   const [countdown, setCountdown] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    if (!dailyResult) return;
+    const name = typeof window !== 'undefined' ? localStorage.getItem('usa_test_display_name') ?? '' : '';
+    const params = new URLSearchParams({
+      score: String(dailyResult.score),
+      total: String(dailyResult.totalQuestions),
+      ...(name && { name }),
+    });
+    const shareUrl = `https://usatest.co/share?${params.toString()}`;
+    const shareText = `I scored ${dailyResult.score}/${dailyResult.totalQuestions} on today's USA Test — can you beat me?`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'USA Test', text: shareText, url: shareUrl }); } catch { /* cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
 
   useEffect(() => {
     if (!dailyResult) return;
@@ -94,8 +114,8 @@ function DailyQuizHero({
           </button>
         )}
 
-        {/* Categories */}
-        <div className="flex flex-wrap gap-x-2 gap-y-3 mt-3 justify-center sm:justify-start">
+        {/* Categories — hidden once score is saved */}
+        <div className={`flex flex-wrap gap-x-2 gap-y-3 mt-3 justify-center sm:justify-start ${dailyResult && scoreSaved ? 'hidden' : ''}`}>
           {['Civics', 'History', 'Geography', 'Culture', 'People', 'Landmarks'].map((cat) => (
             <span
               key={cat}
@@ -143,6 +163,17 @@ function DailyQuizHero({
               </div>
             </div>
           </div>
+        )}
+
+        {/* Share button — shown when score is saved */}
+        {dailyResult && scoreSaved && (
+          <button
+            onClick={handleShare}
+            className="w-full py-3.5 bg-white border-2 border-amac-blue/10 text-amac-blue rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/5 transition-all active:scale-[0.98]"
+          >
+            <span>📤</span>
+            {copied ? 'Link Copied!' : 'Share My Score'}
+          </button>
         )}
 
         {/* Countdown — shown whenever today's test is complete */}
