@@ -216,6 +216,7 @@ function DailyResults({
 }) {
   const [showCapture, setShowCapture] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [form, setForm] = useState<CaptureFormData>({
     firstName: '',
     lastInitial: '',
@@ -236,6 +237,30 @@ function DailyResults({
   const tier = getTierInfo(score, totalQuestions);
   const percentileMsg = getPercentileMessage(score, totalQuestions);
   const personalBestMsg = getPersonalBestMessage(score, totalSeconds ?? null, personalBest);
+
+  const handleShare = async () => {
+    const name = typeof window !== 'undefined' ? localStorage.getItem('usa_test_display_name') ?? '' : '';
+    const params = new URLSearchParams({
+      score: String(score),
+      total: String(totalQuestions),
+      ...(streak > 1 && { streak: String(streak) }),
+      ...(name && { name }),
+    });
+    const shareUrl = `https://usatest.co/share?${params.toString()}`;
+    const shareText = `I scored ${score}/${totalQuestions} on today's USA Test — can you beat me?`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'USA Test', text: shareText, url: shareUrl });
+      } catch {
+        // user cancelled — no-op
+      }
+    } else {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  };
 
   const [countdown, setCountdown] = useState('');
   useEffect(() => {
@@ -411,6 +436,15 @@ function DailyResults({
           </div>
         </div>
       </div>
+
+      {/* ── Share button ── */}
+      <button
+        onClick={handleShare}
+        className="w-full py-3.5 bg-white border-2 border-amac-blue/10 text-amac-blue rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/5 transition-all active:scale-[0.98]"
+      >
+        <span>📤</span>
+        {copied ? 'Link Copied!' : 'Share My Score'}
+      </button>
 
       {/* ── Secondary actions ── */}
       <div className="flex flex-col sm:flex-row gap-3">
