@@ -267,45 +267,52 @@ function LeaderboardPreview({
       </div>
 
       {/* Rows */}
-      <div className="space-y-0.5 flex-1">
-        {rows.map((entry, i) => (
-          <div
-            key={i}
-            className={`flex items-center justify-between px-2.5 py-2 rounded-xl transition-colors ${
-              isPlaceholder ? 'opacity-40' : 'hover:bg-amac-gray/60'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <span className={`text-[10px] font-black w-4 ${i < 3 ? 'text-amac-red' : 'text-neutral-300'}`}>
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <span className="font-bold text-sm text-neutral-600 truncate max-w-[100px]">
-                {entry.display_name}
-              </span>
+      <div className="space-y-1 flex-1">
+        {rows.map((entry, i) => {
+          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null;
+          return (
+            <div
+              key={i}
+              className={`flex items-center justify-between px-2.5 py-2 rounded-xl transition-colors ${
+                isPlaceholder ? 'opacity-40' : i < 3 ? 'bg-amac-gray/40' : 'hover:bg-amac-gray/40'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                {medal ? (
+                  <span className="text-base w-5 text-center">{medal}</span>
+                ) : (
+                  <span className="text-[10px] font-black w-5 text-center text-neutral-300">
+                    {String(i + 1)}
+                  </span>
+                )}
+                <span className="font-bold text-sm text-neutral-600 truncate max-w-[90px]">
+                  {entry.display_name}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="font-black text-base text-amac-blue">{entry.score}</span>
+                {entry.time_seconds != null && (
+                  <span className="text-neutral-400 font-bold text-xs ml-0.5">/{entry.time_seconds}s</span>
+                )}
+              </div>
             </div>
-            <span className="font-black text-sm text-amac-blue">
-              {entry.score}
-              {entry.time_seconds != null && (
-                <span className="text-neutral-400 font-bold text-xs">/{entry.time_seconds}s</span>
-              )}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* CTA */}
       <div className="mt-4 pt-3 border-t border-neutral-100">
         {playedToday ? (
-          <p className="text-[11px] font-bold text-green-600 text-center flex items-center justify-center gap-1">
-            <CheckCircle2 className="w-3 h-3" />
-            You&apos;re on the board today.
+          <p className="text-xs font-black text-green-600 text-center flex items-center justify-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            You&apos;re on the board today
           </p>
         ) : (
           <button
             onClick={onPlayDaily}
-            className="w-full text-center text-[11px] font-black text-amac-blue hover:text-amac-blue/70 transition-colors flex items-center justify-center gap-1"
+            className="w-full py-2.5 bg-amac-blue/5 hover:bg-amac-blue/10 border border-amac-blue/10 rounded-xl font-black text-xs text-amac-blue transition-all flex items-center justify-center gap-1.5"
           >
-            Play to get on the leaderboard
+            Can you crack the top 5?
             <ChevronRight className="w-3 h-3" />
           </button>
         )}
