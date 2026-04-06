@@ -124,19 +124,60 @@ export function GameBoard({
         </h3>
       </motion.div>
 
-      {/* Factoid tile — between question and answers */}
+      {/* Feedback + factoid + continue — appears between question and answers */}
       <AnimatePresence>
-        {answered && hasExplanation && (
+        {answered && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="bg-white border border-amac-blue/10 rounded-2xl p-4 sm:p-5 flex items-start gap-3 shadow-sm"
+            className={`rounded-2xl border p-4 sm:p-5 space-y-3 ${
+              isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+            }`}
           >
-            <span className="text-lg shrink-0">💡</span>
-            <p className="text-sm text-neutral-700 leading-relaxed font-medium">
-              {question.explanation}
-            </p>
+            {/* Correct / Incorrect header */}
+            <div className="flex items-start gap-3">
+              {isCorrect ? (
+                <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className={`font-black text-sm sm:text-base ${isCorrect ? 'text-green-700' : 'text-red-600'}`}>
+                  {timedOut ? "Time's up!" : isCorrect ? 'Correct!' : 'Incorrect'}
+                </p>
+                {!isCorrect && (
+                  <p className="text-sm text-red-600 font-medium mt-0.5">
+                    Correct answer: <span className="font-black">{question.correctAnswer}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Factoid */}
+            {hasExplanation && (
+              <div className="flex items-start gap-2.5 bg-white/60 rounded-xl p-3 border border-black/5">
+                <span className="text-base shrink-0">💡</span>
+                <p className="text-sm text-neutral-700 leading-relaxed font-medium">
+                  {question.explanation}
+                </p>
+              </div>
+            )}
+
+            {/* Continue button */}
+            {hasExplanation && (
+              <button
+                onClick={onContinue}
+                className={`w-full py-3 sm:py-4 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-sm ${
+                  isCorrect
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-amac-red hover:bg-amac-red/90 text-white'
+                }`}
+              >
+                {questionNumber < totalQuestions ? 'Next Question' : 'See Results'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -190,53 +231,6 @@ export function GameBoard({
           );
         })}
       </div>
-
-      {/* Correct/Incorrect feedback + Continue button */}
-      <AnimatePresence>
-        {answered && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            className={`rounded-2xl border p-4 sm:p-6 space-y-4 ${
-              isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              {isCorrect ? (
-                <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-              ) : (
-                <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className={`font-black text-sm sm:text-base ${isCorrect ? 'text-green-700' : 'text-red-600'}`}>
-                  {timedOut ? "Time's up!" : isCorrect ? 'Correct!' : 'Incorrect'}
-                </p>
-                {!isCorrect && (
-                  <p className="text-sm text-red-600 font-medium mt-0.5">
-                    Correct answer:{' '}
-                    <span className="font-black">{question.correctAnswer}</span>
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {hasExplanation && (
-              <button
-                onClick={onContinue}
-                className={`w-full py-3 sm:py-4 rounded-xl font-black text-sm sm:text-base flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-sm ${
-                  isCorrect
-                    ? 'bg-green-600 hover:bg-green-700 text-white'
-                    : 'bg-amac-red hover:bg-amac-red/90 text-white'
-                }`}
-              >
-                {questionNumber < totalQuestions ? 'Next Question' : 'See Results'}
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {loading && (
         <div className="flex justify-center pt-2">
