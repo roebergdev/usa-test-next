@@ -87,12 +87,12 @@ function DailyQuizHero({
 
         {/* Categories */}
         <div className="flex flex-wrap gap-2">
-          {['Culture', 'History', 'Geography', 'Civics', 'People', 'Landmarks'].map((cat) => (
+          {['Civics', 'History', 'Geography', 'Culture', 'People', 'Landmarks'].map((cat) => (
             <span
               key={cat}
               className="px-3 py-1 rounded-full bg-amac-blue/5 border border-amac-blue/10 text-[11px] sm:text-xs font-black text-amac-blue/70 uppercase tracking-widest"
             >
-              {cat}
+              {cat === 'Civics' ? `\u00A0${cat}\u00A0` : cat}
             </span>
           ))}
         </div>
