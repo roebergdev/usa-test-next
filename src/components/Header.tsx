@@ -18,14 +18,9 @@ export function Header({ onHome }: HeaderProps) {
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amac-blue rounded-lg sm:rounded-xl flex items-center justify-center shadow-xl shadow-amac-blue/20 rotate-3">
             <Flag className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
-          <div className="flex flex-col text-left">
-            <span className="text-xl sm:text-2xl font-black tracking-tighter leading-none text-amac-blue">
-              USA <span className="text-amac-red">TEST</span>
-            </span>
-            <span className="text-[8px] sm:text-[10px] text-neutral-400 uppercase tracking-[0.2em] sm:tracking-[0.3em] font-bold">
-              Interactive Experience
-            </span>
-          </div>
+          <span className="text-xl sm:text-2xl font-black tracking-tighter leading-none text-amac-blue">
+            USA <span className="text-amac-red">TEST</span>
+          </span>
         </button>
       </div>
     </nav>
