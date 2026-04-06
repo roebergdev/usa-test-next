@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${nunito.variable} antialiased`}>
-      <body>
+      <body className="font-sans">
         <SupabaseProvider>{children}</SupabaseProvider>
       </body>
     </html>
