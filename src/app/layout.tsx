@@ -13,9 +13,33 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: 'USA TEST - The Ultimate Trivia Challenge',
+  title: 'USA Test — How American Are You?',
   description:
-    'An interactive journey through the heart of America. Test your knowledge on history, geography, and the spirit of the USA.',
+    'Take the daily USA Test — 10 questions on history, civics, geography, and culture. See how you stack up against Americans nationwide.',
+  metadataBase: new URL('https://usatest.co'),
+  openGraph: {
+    title: 'USA Test — How American Are You?',
+    description:
+      'Take the daily USA Test — 10 questions on history, civics, geography, and culture. See how you stack up against Americans nationwide.',
+    url: 'https://usatest.co',
+    siteName: 'USA Test',
+    images: [
+      {
+        url: '/logo.png',
+        width: 4000,
+        height: 4000,
+        alt: 'USA Test',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'USA Test — How American Are You?',
+    description:
+      'Take the daily USA Test — 10 questions on history, civics, geography, and culture. See how you stack up against Americans nationwide.',
+    images: ['/logo.png'],
+  },
 };
 
 export default function RootLayout({
