@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Trophy,
   ChevronRight,
+  Share2,
 } from 'lucide-react';
 import { stateFlag } from '@/lib/states';
 import {
@@ -169,11 +170,9 @@ function DailyQuizHero({
         {dailyResult && scoreSaved && (
           <button
             onClick={handleShare}
-            className="w-full py-3.5 bg-amac-red text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all active:scale-[0.98] shadow-lg shadow-amac-red/20"
+            className="w-full py-3.5 bg-amac-red/10 border border-amac-red/20 text-amac-red rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-red/15 transition-all active:scale-[0.98]"
           >
-            <div className="w-5 h-5 bg-white/20 rounded-md flex items-center justify-center shrink-0">
-              <span className="text-xs">📤</span>
-            </div>
+            <Share2 className="w-4 h-4 shrink-0" />
             {copied ? 'Link Copied!' : 'Share My Score'}
           </button>
         )}
