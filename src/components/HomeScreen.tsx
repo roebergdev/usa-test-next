@@ -70,7 +70,7 @@ function DailyQuizHero({
   }, [dailyResult]);
 
   return (
-    <div className="relative bg-white border-2 border-amac-blue/10 rounded-3xl sm:rounded-[2.5rem] p-7 sm:p-12 shadow-2xl shadow-amac-blue/5 overflow-hidden">
+    <div className="relative bg-white border-2 border-amac-blue/10 rounded-3xl sm:rounded-[2.5rem] p-7 sm:p-12 shadow-xl shadow-amac-blue/10 overflow-hidden">
       <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-amac-blue/8 via-amac-red/4 to-transparent rounded-full blur-[80px] pointer-events-none" />
 
       <div className="relative space-y-5 sm:space-y-7">
