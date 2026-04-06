@@ -75,6 +75,18 @@ function DailyQuizHero({
           </h2>
         </div>
 
+        {/* Categories */}
+        <div className="flex flex-wrap gap-2">
+          {['Civics', 'History', 'Geography', 'Culture', 'People', 'Landmarks'].map((cat) => (
+            <span
+              key={cat}
+              className="px-3 py-1 rounded-full bg-amac-blue/5 border border-amac-blue/10 text-[11px] sm:text-xs font-black text-amac-blue/70 uppercase tracking-widest"
+            >
+              {cat}
+            </span>
+          ))}
+        </div>
+
         {/* State 1: not played */}
         {!dailyResult && (
           <button onClick={onPlayDaily} className="group relative w-full sm:w-fit mb-4 sm:mb-6">
