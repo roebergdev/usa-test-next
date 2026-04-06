@@ -393,7 +393,10 @@ export function HomeScreen({ onPlayDaily, onPlayPractice }: HomeScreenProps) {
       {/* 1 — Daily Quiz (dominant) */}
       <DailyQuizHero dailyResult={dailyResult} scoreSaved={scoreSaved} onPlayDaily={onPlayDaily} />
 
-      {/* 2 — Secondary: streak + leaderboard preview */}
+      {/* 2 — Practice mode */}
+      <PracticeRow onPlayPractice={onPlayPractice} />
+
+      {/* 3 — Streak + leaderboard preview */}
       <div className="grid sm:grid-cols-2 gap-4">
         <StreakCard
           playedToday={playedToday}
@@ -406,9 +409,6 @@ export function HomeScreen({ onPlayDaily, onPlayPractice }: HomeScreenProps) {
           onPlayDaily={onPlayDaily}
         />
       </div>
-
-      {/* 3 — Tertiary: practice mode */}
-      <PracticeRow onPlayPractice={onPlayPractice} />
     </motion.div>
   );
 }
