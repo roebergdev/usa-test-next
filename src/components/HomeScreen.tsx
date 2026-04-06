@@ -119,10 +119,10 @@ function DailyQuizHero({
             <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
             <div>
               <div className="text-sm font-black text-green-700">
-                {dailyResult.score}/{dailyResult.totalQuestions} — you&apos;re on the board
+                {dailyResult.score}/{dailyResult.totalQuestions} you&apos;re on the board
               </div>
               <div className="text-xs text-green-600 font-medium">
-                New quiz drops tomorrow. Don&apos;t break the streak.
+                Come back tomorrow to keep your streak going.
               </div>
             </div>
           </div>
