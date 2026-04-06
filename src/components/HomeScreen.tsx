@@ -6,10 +6,8 @@ import { motion } from 'motion/react';
 import {
   Play,
   CheckCircle2,
-  Flame,
   Trophy,
   ChevronRight,
-  Zap,
 } from 'lucide-react';
 import { stateFlag } from '@/lib/states';
 import {
@@ -146,86 +144,34 @@ function StreakCard({
   atRiskStreak: number;
   onPlayDaily: () => void;
 }) {
-  // State 1: Played today, multi-day streak
-  if (playedToday && streak > 1) {
-    return (
-      <div className="bg-orange-50 border border-orange-200 rounded-2xl sm:rounded-3xl p-5 sm:p-7 space-y-3">
-        <div className="flex items-center gap-2">
-          <Flame className="w-5 h-5 text-orange-500" />
-          <span className="text-xs font-black uppercase tracking-widest text-orange-500">Your Streak</span>
-        </div>
-        <div>
-          <div className="text-4xl sm:text-5xl font-black tracking-tighter text-orange-500 leading-none">
-            {streak}
-            <span className="text-lg sm:text-xl font-black text-orange-400 ml-1">days</span>
-          </div>
-          <p className="text-xs sm:text-sm font-medium text-orange-600 mt-1.5">
-            Keep it going — come back tomorrow.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const streakNum = playedToday ? streak : atRiskStreak;
 
-  // State 2: Played today, day 1
-  if (playedToday && streak <= 1) {
-    return (
-      <div className="bg-amac-blue/5 border border-amac-blue/10 rounded-2xl sm:rounded-3xl p-5 sm:p-7 space-y-3">
-        <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-amac-blue" />
-          <span className="text-xs font-black uppercase tracking-widest text-amac-blue">Streak Started</span>
-        </div>
-        <div>
-          <div className="text-4xl sm:text-5xl font-black tracking-tighter text-amac-blue leading-none">
-            Day 1
-          </div>
-          <p className="text-xs sm:text-sm font-medium text-amac-blue/70 mt-1.5">
-            Show up tomorrow to make it a habit.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // State 3: At-risk streak (played yesterday, not today)
-  if (!playedToday && atRiskStreak > 0) {
-    return (
-      <div className="bg-amber-50 border border-amber-300 rounded-2xl sm:rounded-3xl p-5 sm:p-7 space-y-3">
-        <div className="flex items-center gap-2">
-          <Flame className="w-5 h-5 text-amber-500" />
-          <span className="text-xs font-black uppercase tracking-widest text-amber-600">Streak at Risk</span>
-        </div>
-        <div className="space-y-1">
-          <div className="text-4xl sm:text-5xl font-black tracking-tighter text-amber-600 leading-none">
-            {atRiskStreak}
-            <span className="text-lg sm:text-xl font-black text-amber-500 ml-1">days</span>
-          </div>
-          <p className="text-xs sm:text-sm font-medium text-amber-700">
-            Play today or lose your streak.
-          </p>
-        </div>
-        <button
-          onClick={onPlayDaily}
-          className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
-        >
-          <Play className="w-3.5 h-3.5 fill-current" />
-          Play Now
-        </button>
-      </div>
-    );
-  }
-
-  // State 4: No streak, not played
   return (
     <div className="bg-white border-2 border-orange-100 rounded-2xl p-6 sm:p-8 shadow-md">
       <div className="flex items-center gap-4 sm:gap-5">
         <div className="w-12 h-12 sm:w-14 sm:h-14 bg-amac-blue/5 rounded-2xl flex items-center justify-center shrink-0">
           <span className="text-2xl sm:text-3xl">🔥</span>
         </div>
-        <div className="font-black text-base sm:text-lg text-amac-red tracking-tight">
-          Daily Streak
+        <div>
+          <div className="font-black text-base sm:text-lg text-amac-red tracking-tight">
+            Daily Streak
+          </div>
+          {streakNum > 0 && (
+            <div className="text-sm font-black text-amac-red/70 tracking-tight">
+              {streakNum} {streakNum === 1 ? 'day' : 'days'}
+            </div>
+          )}
         </div>
       </div>
+      {!playedToday && atRiskStreak > 0 && (
+        <button
+          onClick={onPlayDaily}
+          className="mt-4 w-full py-2.5 bg-amac-red hover:bg-amac-red/90 text-white rounded-xl font-black text-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+        >
+          <Play className="w-3.5 h-3.5 fill-current" />
+          Play Now to Keep It
+        </button>
+      )}
     </div>
   );
 }
