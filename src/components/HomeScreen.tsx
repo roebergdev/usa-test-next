@@ -51,20 +51,12 @@ function DailyQuizHero({
   scoreSaved: boolean;
   onPlayDaily: () => void;
 }) {
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
 
   return (
     <div className="relative bg-white border border-amac-blue/5 rounded-3xl sm:rounded-[2.5rem] p-7 sm:p-12 shadow-2xl shadow-amac-blue/5 overflow-hidden">
       <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-amac-blue/8 via-amac-red/4 to-transparent rounded-full blur-[80px] pointer-events-none" />
 
       <div className="relative space-y-5 sm:space-y-7">
-        {/* Date */}
-        <p className="text-base sm:text-lg font-black text-amac-dark/70 tracking-tight">{today}</p>
-
         {/* Headline */}
         <div>
           <h2 className="text-4xl sm:text-6xl font-black tracking-tighter leading-[0.9] uppercase text-amac-dark">
@@ -86,7 +78,7 @@ function DailyQuizHero({
         )}
 
         {/* Categories */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 mt-3">
           {['Civics', 'History', 'Geography', 'Culture', 'People', 'Landmarks'].map((cat) => (
             <span
               key={cat}

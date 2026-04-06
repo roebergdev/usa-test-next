@@ -7,6 +7,12 @@ interface HeaderProps {
 }
 
 export function Header({ onHome }: HeaderProps) {
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+
   return (
     <nav className="border-b border-amac-blue/5 bg-white/80 backdrop-blur-2xl sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 sm:h-20 flex items-center justify-between">
@@ -22,6 +28,7 @@ export function Header({ onHome }: HeaderProps) {
             USA <span className="text-amac-red">TEST</span>
           </span>
         </button>
+        <p className="text-sm sm:text-base font-black text-amac-dark/70 tracking-tight">{today}</p>
       </div>
     </nav>
   );
