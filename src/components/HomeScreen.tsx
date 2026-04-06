@@ -329,11 +329,8 @@ function PracticeRow({ onPlayPractice }: { onPlayPractice: () => void }) {
             <span className="text-2xl sm:text-3xl">🧠</span>
           </div>
           <div>
-            <div className="font-black text-base sm:text-xl text-amac-dark group-hover:text-amac-blue transition-colors tracking-tight">
+            <div className="font-black text-lg sm:text-2xl text-amac-dark group-hover:text-amac-blue transition-colors tracking-tight">
               Practice Mode
-            </div>
-            <div className="text-xs sm:text-sm text-neutral-400 font-medium mt-0.5">
-              10 questions &middot; Randomized &middot; No streak pressure
             </div>
           </div>
         </div>
