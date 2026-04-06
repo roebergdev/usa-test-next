@@ -318,7 +318,7 @@ function DailyResults({
               <p className="text-sm font-black text-neutral-400 mt-1">{totalSeconds}s</p>
             )}
           </div>
-          <span className={`shrink-0 mt-1 px-3 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest ${tier.cls}`}>
+          <span className={`shrink-0 mt-1 px-4 py-2 rounded-full border text-xs font-black uppercase tracking-widest ${tier.cls}`}>
             {tier.label}
           </span>
         </div>
