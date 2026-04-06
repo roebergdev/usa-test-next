@@ -303,10 +303,10 @@ function LeaderboardPreview({
                   )}
                 </div>
               </div>
-              <div className="text-right">
+              <div className="flex items-baseline gap-2">
                 <span className="font-black text-base text-amac-blue">{entry.score}</span>
                 {entry.time_seconds != null && (
-                  <span className="text-neutral-400 font-bold text-xs ml-0.5">/{entry.time_seconds}s</span>
+                  <span className="text-neutral-400 font-black text-base">{entry.time_seconds}s</span>
                 )}
               </div>
             </div>
