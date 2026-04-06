@@ -214,14 +214,14 @@ function StreakCard({
   return (
     <div className="bg-white border border-amac-blue/5 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-lg shadow-amac-blue/5 space-y-3">
       <div className="flex items-center gap-2">
-        <Flame className="w-5 h-5 text-neutral-300" />
-        <span className="text-xs font-black uppercase tracking-widest text-neutral-400">Daily Streak</span>
+        <span className="text-lg">🔥</span>
+        <span className="text-xs font-black uppercase tracking-widest text-orange-400">Daily Streak</span>
       </div>
       <div>
-        <div className="text-4xl sm:text-5xl font-black tracking-tighter text-neutral-200 leading-none">
+        <div className="text-4xl sm:text-5xl font-black tracking-tighter text-orange-200 leading-none">
           —
         </div>
-        <p className="text-xs sm:text-sm font-medium text-neutral-400 mt-1.5">
+        <p className="text-xs sm:text-sm font-medium text-orange-300 mt-1.5">
           Play daily to build your streak.
         </p>
       </div>
