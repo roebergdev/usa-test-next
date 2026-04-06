@@ -138,11 +138,17 @@ export async function POST(request: NextRequest) {
     .eq('quiz_date', getTodayString());
 
   // ── 6. Leaderboard entry ────────────────────────────────────────────────────
+  // Extract US state from Vercel's IP geolocation header (e.g. "US-TX" → "TX").
+  // Returns null for non-US users or when running locally (header absent).
+  const region = request.headers.get('x-vercel-ip-country-region');
+  const stateCode = region?.startsWith('US-') ? region.slice(3) : null;
+
   const { error: lbError } = await supabaseAdmin.from('leaderboard').insert({
     display_name: resolvedDisplayName,
     score,
     mode: 'daily',
     time_seconds: timeSeconds ?? null,
+    state_code: stateCode,
   });
 
   if (lbError) {

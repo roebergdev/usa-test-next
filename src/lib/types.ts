@@ -15,6 +15,7 @@ export interface LeaderboardEntry {
   display_name: string;
   score: number;
   time_seconds: number | null;
+  state_code: string | null;
   created_at: string;
 }
 

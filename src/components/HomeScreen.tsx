@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Zap,
 } from 'lucide-react';
+import { stateFlag } from '@/lib/states';
 import {
   getDailyResult,
   getStreak,
@@ -246,8 +247,8 @@ function LeaderboardPreview({
 
   const isPlaceholder = leaderboard.length === 0;
   const rows = isPlaceholder
-    ? PLACEHOLDER_ROWS.map((r) => ({ ...r, time_seconds: null as number | null }))
-    : leaderboard.slice(0, 5).map((e) => ({ display_name: e.display_name, score: e.score, time_seconds: e.time_seconds ?? null }));
+    ? PLACEHOLDER_ROWS.map((r) => ({ ...r, time_seconds: null as number | null, state_code: null as string | null }))
+    : leaderboard.slice(0, 5).map((e) => ({ display_name: e.display_name, score: e.score, time_seconds: e.time_seconds ?? null, state_code: e.state_code ?? null }));
 
   return (
     <div className="bg-white border-2 border-amac-blue/10 rounded-2xl p-6 sm:p-8 shadow-md flex flex-col">
@@ -285,9 +286,16 @@ function LeaderboardPreview({
                     {String(i + 1)}
                   </span>
                 )}
-                <span className="font-bold text-sm text-neutral-600 truncate max-w-[90px]">
-                  {entry.display_name}
-                </span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold text-sm text-neutral-600 truncate max-w-[80px]">
+                    {entry.display_name}
+                  </span>
+                  {entry.state_code && (
+                    <span className="text-xs font-black text-neutral-400 shrink-0">
+                      {stateFlag(entry.state_code)} {entry.state_code}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="text-right">
                 <span className="font-black text-base text-amac-blue">{entry.score}</span>
