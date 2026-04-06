@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Question } from '@/lib/types';
 import { Timer } from '@/components/Timer';
 import { motion, AnimatePresence } from 'motion/react';
@@ -27,6 +27,20 @@ function getDifficultyLabel(difficulty: number): { label: string; cls: string } 
   return { label: 'Hard', cls: 'text-red-700 bg-red-50 border-red-200' };
 }
 
+/** Fisher-Yates shuffle using a seeded value so options don't re-shuffle on re-render. */
+function shuffleOptions(options: string[], seed: string): string[] {
+  const arr = [...options];
+  // Simple hash of the question id as a shuffle seed
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
+  for (let i = arr.length - 1; i > 0; i--) {
+    h = (Math.imul(h ^ (h >>> 16), 0x45d9f3b)) | 0;
+    const j = Math.abs(h) % (i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export function GameBoard({
   question,
   score,
@@ -44,8 +58,13 @@ export function GameBoard({
   const hasExplanation = Boolean(question.explanation);
   const diff = getDifficultyLabel(question.difficulty);
 
+  // Shuffle once per question (stable across re-renders, changes on new question)
+  const shuffledOptions = useMemo(
+    () => shuffleOptions(question.options, question.id),
+    [question.id, question.options]
+  );
+
   // Auto-advance when answered and there's no explanation to read.
-  // When an explanation exists, the user must click the button themselves.
   useEffect(() => {
     if (!answered || hasExplanation) return;
     const t = setTimeout(onContinue, AUTO_ADVANCE_MS);
@@ -105,9 +124,26 @@ export function GameBoard({
         </h3>
       </motion.div>
 
+      {/* Factoid — appears above answer grid once answered */}
+      <AnimatePresence>
+        {answered && hasExplanation && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="bg-amac-blue/5 border border-amac-blue/10 rounded-2xl p-4 sm:p-5 flex items-start gap-3"
+          >
+            <span className="text-lg shrink-0">💡</span>
+            <p className="text-sm text-amac-dark/80 leading-relaxed font-medium">
+              {question.explanation}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Answer grid */}
       <div className="grid sm:grid-cols-2 gap-2.5 sm:gap-3">
-        {question.options.map((option, i) => {
+        {shuffledOptions.map((option, i) => {
           const isSelected = selectedAnswer === option;
           const isCorrectOption = option === question.correctAnswer;
 
@@ -124,7 +160,7 @@ export function GameBoard({
 
           return (
             <motion.button
-              key={i}
+              key={option}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
@@ -155,7 +191,7 @@ export function GameBoard({
         })}
       </div>
 
-      {/* Feedback + Continue */}
+      {/* Correct/Incorrect feedback + Continue button */}
       <AnimatePresence>
         {answered && (
           <motion.div
@@ -163,9 +199,7 @@ export function GameBoard({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             className={`rounded-2xl border p-4 sm:p-6 space-y-4 ${
-              isCorrect
-                ? 'bg-green-50 border-green-200'
-                : 'bg-red-50 border-red-200'
+              isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
             }`}
           >
             <div className="flex items-start gap-3">
@@ -182,11 +216,6 @@ export function GameBoard({
                   <p className="text-sm text-red-600 font-medium mt-0.5">
                     Correct answer:{' '}
                     <span className="font-black">{question.correctAnswer}</span>
-                  </p>
-                )}
-                {question.explanation && (
-                  <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
-                    {question.explanation}
                   </p>
                 )}
               </div>
