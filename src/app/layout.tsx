@@ -1,11 +1,15 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Nunito } from 'next/font/google';
 import { SupabaseProvider } from '@/components/providers/SupabaseProvider';
 import './globals.css';
 
-const inter = Inter({
+// Nunito is the closest open-source match to Duolingo's proprietary "din-round":
+// rounded letterforms, strong weight range (400–900), excellent for game/quiz UI.
+const nunito = Nunito({
   subsets: ['latin'],
-  variable: '--font-inter',
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-nunito',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -20,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} antialiased`}>
+    <html lang="en" className={`${nunito.variable} antialiased`}>
       <body>
         <SupabaseProvider>{children}</SupabaseProvider>
       </body>
