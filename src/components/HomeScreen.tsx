@@ -169,9 +169,11 @@ function DailyQuizHero({
         {dailyResult && scoreSaved && (
           <button
             onClick={handleShare}
-            className="w-full py-3.5 bg-white border-2 border-amac-blue/10 text-amac-blue rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/5 transition-all active:scale-[0.98]"
+            className="w-full py-3.5 bg-amac-red text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all active:scale-[0.98] shadow-lg shadow-amac-red/20"
           >
-            <span>📤</span>
+            <div className="w-5 h-5 bg-white/20 rounded-md flex items-center justify-center shrink-0">
+              <span className="text-xs">📤</span>
+            </div>
             {copied ? 'Link Copied!' : 'Share My Score'}
           </button>
         )}
