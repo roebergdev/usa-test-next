@@ -6,7 +6,6 @@ import { motion } from 'motion/react';
 import {
   CalendarDays,
   Play,
-  Dumbbell,
   CheckCircle2,
   Flame,
   Trophy,
@@ -333,23 +332,25 @@ function PracticeRow({ onPlayPractice }: { onPlayPractice: () => void }) {
   return (
     <button
       onClick={onPlayPractice}
-      className="w-full text-left group bg-amac-gray border border-amac-blue/5 rounded-2xl p-5 sm:p-6 hover:bg-white hover:shadow-lg hover:shadow-amac-blue/5 transition-all duration-300"
+      className="w-full text-left group bg-white border-2 border-amac-blue/10 hover:border-amac-blue/30 rounded-2xl p-6 sm:p-8 shadow-md hover:shadow-xl hover:shadow-amac-blue/10 transition-all duration-300 active:scale-[0.99]"
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white group-hover:bg-amac-blue/5 rounded-xl flex items-center justify-center shadow-sm transition-colors">
-            <Dumbbell className="w-4 h-4 sm:w-5 sm:h-5 text-neutral-400 group-hover:text-amac-blue transition-colors" />
+        <div className="flex items-center gap-4 sm:gap-5">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-amac-blue/5 group-hover:bg-amac-blue/10 rounded-2xl flex items-center justify-center transition-colors shrink-0">
+            <span className="text-2xl sm:text-3xl">🧠</span>
           </div>
           <div>
-            <div className="font-black text-sm sm:text-base text-amac-dark group-hover:text-amac-blue transition-colors">
+            <div className="font-black text-base sm:text-xl text-amac-dark group-hover:text-amac-blue transition-colors tracking-tight">
               Practice Mode
             </div>
-            <div className="text-xs text-neutral-400 font-medium">
+            <div className="text-xs sm:text-sm text-neutral-400 font-medium mt-0.5">
               10 questions &middot; Randomized &middot; No streak pressure
             </div>
           </div>
         </div>
-        <Play className="w-4 h-4 text-neutral-300 group-hover:text-amac-blue transition-colors fill-current" />
+        <div className="w-9 h-9 rounded-xl bg-amac-blue/5 group-hover:bg-amac-blue group-hover:text-white flex items-center justify-center transition-all duration-300 shrink-0">
+          <Play className="w-4 h-4 text-amac-blue group-hover:text-white transition-colors fill-current" />
+        </div>
       </div>
     </button>
   );
