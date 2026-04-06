@@ -120,7 +120,7 @@ function DailyQuizHero({
                 <span className="text-2xl">{dailyResult.score}/{dailyResult.totalQuestions}</span>
                 <span className="text-2xl">Awesome!</span>
               </div>
-              <div className="text-xs text-green-600 font-medium">
+              <div className="text-sm sm:text-base text-green-600 font-bold">
                 Come back tomorrow to keep your streak going.
               </div>
             </div>
