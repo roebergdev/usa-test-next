@@ -50,6 +50,24 @@ function DailyQuizHero({
   scoreSaved: boolean;
   onPlayDaily: () => void;
 }) {
+  const [countdown, setCountdown] = useState('');
+
+  useEffect(() => {
+    if (!dailyResult) return;
+    function tick() {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const diff = Math.max(0, Math.floor((midnight.getTime() - now.getTime()) / 1000));
+      const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+      const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+      const s = String(diff % 60).padStart(2, '0');
+      setCountdown(`${h}:${m}:${s}`);
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [dailyResult]);
 
   return (
     <div className="relative bg-white border border-amac-blue/5 rounded-3xl sm:rounded-[2.5rem] p-7 sm:p-12 shadow-2xl shadow-amac-blue/5 overflow-hidden">
@@ -124,6 +142,16 @@ function DailyQuizHero({
                 Come back tomorrow to keep your streak going.
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Countdown — shown whenever today's test is complete */}
+        {dailyResult && countdown && (
+          <div className="text-center pt-1">
+            <p className="text-4xl sm:text-5xl font-black text-amac-dark tabular-nums tracking-tight">{countdown}</p>
+            <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest mt-1">
+              until next test
+            </p>
           </div>
         )}
       </div>
