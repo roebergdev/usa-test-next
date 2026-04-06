@@ -28,7 +28,6 @@ import {
   Home,
   CheckCircle2,
   ChevronRight,
-  Dumbbell,
   MessageSquare,
 } from 'lucide-react';
 
@@ -231,6 +230,23 @@ function DailyResults({
   const percentileMsg = getPercentileMessage(score, totalQuestions);
   const personalBestMsg = getPersonalBestMessage(score, totalSeconds ?? null, personalBest);
 
+  const [countdown, setCountdown] = useState('');
+  useEffect(() => {
+    function tick() {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      const diff = Math.max(0, Math.floor((midnight.getTime() - now.getTime()) / 1000));
+      const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+      const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+      const s = String(diff % 60).padStart(2, '0');
+      setCountdown(`${h}:${m}:${s}`);
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
   // Fire analytics once on mount
   useEffect(() => {
     track('daily_results_viewed', {
@@ -382,7 +398,7 @@ function DailyResults({
                   onClick={onPlayPractice}
                   className="flex-1 py-3.5 bg-amac-blue text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/90 transition-all active:scale-[0.98]"
                 >
-                  <Dumbbell className="w-4 h-4" />
+                  <span>🧠</span>
                   Practice More
                 </button>
               )}
@@ -590,7 +606,7 @@ function DailyResults({
                   onClick={onPlayPractice}
                   className="flex-1 py-3.5 bg-amac-blue/10 text-amac-blue rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/20 transition-all active:scale-[0.98] border border-amac-blue/10"
                 >
-                  <Dumbbell className="w-4 h-4" />
+                  <span>🧠</span>
                   Practice More
                 </button>
               )}
@@ -617,9 +633,12 @@ function DailyResults({
         )}
       </AnimatePresence>
 
-      <p className="text-center text-xs text-neutral-400 font-medium">
-        New quiz every day — same time, different questions.
-      </p>
+      <div className="text-center space-y-1 pb-2">
+        <p className="text-3xl font-black text-amac-dark tabular-nums tracking-tight">{countdown}</p>
+        <p className="text-xs font-black text-neutral-400 uppercase tracking-widest">
+          until next quiz &mdash; same time, different questions
+        </p>
+      </div>
     </motion.div>
   );
 }
