@@ -13,14 +13,14 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: 'USA Test — How American Are You?',
+  title: 'USA Test - Learn History for Free',
   description:
-    'Take the daily USA Test — 10 questions on history, civics, geography, and culture. See how you stack up against Americans nationwide.',
+    'Put your knowledge to the test - 5 questions daily, find out where you rank.',
   metadataBase: new URL('https://usatest.co'),
   openGraph: {
-    title: 'USA Test — How American Are You?',
+    title: 'USA Test - Learn History for Free',
     description:
-      'Take the daily USA Test — 10 questions on history, civics, geography, and culture. See how you stack up against Americans nationwide.',
+      'Put your knowledge to the test - 5 questions daily, find out where you rank.',
     url: 'https://usatest.co',
     siteName: 'USA Test',
     images: [
@@ -35,9 +35,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: 'USA Test — How American Are You?',
+    title: 'USA Test - Learn History for Free',
     description:
-      'Take the daily USA Test — 10 questions on history, civics, geography, and culture. See how you stack up against Americans nationwide.',
+      'Put your knowledge to the test - 5 questions daily, find out where you rank.',
     images: ['/logo.png'],
   },
 };
