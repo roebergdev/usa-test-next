@@ -64,12 +64,12 @@ function DailyQuizHero({
 
       <div className="relative space-y-5 sm:space-y-7">
         {/* Badge + date */}
-        <div className="space-y-1">
+        <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amac-blue/5 border border-amac-blue/10 rounded-full text-[9px] sm:text-[10px] text-amac-blue font-black uppercase tracking-[0.2em]">
             <CalendarDays className="w-3 h-3" />
             Today&apos;s Quiz
           </div>
-          <p className="text-base sm:text-lg font-black text-amac-dark/70 tracking-tight pl-1">{today}</p>
+          <p className="text-base sm:text-lg font-black text-amac-dark/70 tracking-tight">{today}</p>
         </div>
 
         {/* Headline */}
