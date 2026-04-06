@@ -25,13 +25,11 @@ import {
   Flag,
   Play,
   Trophy,
-  Flame,
   Home,
   CheckCircle2,
   ChevronRight,
   Dumbbell,
   MessageSquare,
-  TrendingUp,
 } from 'lucide-react';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -233,12 +231,6 @@ function DailyResults({
   const percentileMsg = getPercentileMessage(score, totalQuestions);
   const personalBestMsg = getPersonalBestMessage(score, totalSeconds ?? null, personalBest);
 
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
-
   // Fire analytics once on mount
   useEffect(() => {
     track('daily_results_viewed', {
@@ -291,96 +283,74 @@ function DailyResults({
       animate={{ opacity: 1, scale: 1 }}
       className="max-w-xl mx-auto space-y-3 sm:space-y-4 py-6 sm:py-10"
     >
-      {/* Date line */}
-      <div className="flex items-center gap-2 justify-center mb-1">
-        <Flag className="w-3.5 h-3.5 text-amac-blue" />
-        <p className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">{today}</p>
-      </div>
-
-      {/* ── Score hero ── */}
-      <div className="bg-white rounded-3xl border border-amac-blue/5 shadow-xl shadow-amac-blue/5 p-7 sm:p-10 text-center">
-        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 mb-3">
-          Today&apos;s Result
-        </p>
-        <p className="text-base font-bold text-neutral-400 leading-none mb-1">You got</p>
-        <div className="flex items-baseline justify-center gap-1.5">
-          <span className="text-7xl sm:text-8xl font-black tracking-tighter text-amac-blue leading-none">
-            {score}
-          </span>
-          <span className="text-3xl sm:text-4xl font-black text-neutral-300 leading-none">
-            /{totalQuestions}
-          </span>
-        </div>
-        {totalSeconds != null && (
-          <p className="text-sm font-bold text-neutral-400 mt-2">{totalSeconds}s</p>
-        )}
-        <p className="text-sm sm:text-base font-medium text-neutral-500 mt-3 leading-snug">
-          {getReinforcement(score, totalQuestions)}
-        </p>
-      </div>
-
-      {/* ── Tier + percentile ── */}
-      <div className="bg-white rounded-2xl border border-amac-blue/5 shadow-sm p-4 sm:p-5 flex items-center gap-3 sm:gap-4">
-        <span
-          className={`shrink-0 px-3 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest ${tier.cls}`}
-        >
-          {tier.label}
-        </span>
-        {percentileMsg && (
-          <p className="text-sm font-bold text-neutral-600">{percentileMsg}</p>
-        )}
-      </div>
-
-      {/* ── Streak — show for any streak >= 1 ── */}
-      <div
-        className={`rounded-2xl border p-4 sm:p-5 flex items-center gap-4 ${
-          streak > 1
-            ? 'bg-orange-50 border-orange-200'
-            : 'bg-white border-amac-blue/5'
-        }`}
-      >
-        <Flame
-          className={`w-8 h-8 sm:w-9 sm:h-9 shrink-0 ${
-            streak > 1 ? 'text-orange-500' : 'text-neutral-300'
-          }`}
-        />
-        <div>
-          {streak > 1 ? (
-            <>
-              <p className="text-lg sm:text-xl font-black text-orange-500 leading-none">
-                {streak}-day streak
-              </p>
-              <p className="text-xs font-medium text-orange-400 mt-0.5">
-                Don&apos;t break it — come back tomorrow
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-base font-black text-neutral-700 leading-none">Day 1</p>
-              <p className="text-xs font-medium text-neutral-400 mt-0.5">
-                Come back tomorrow to start your streak
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── Personal best — only when historical data exists ── */}
-      {personalBestMsg && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-green-50 border border-green-200 rounded-2xl p-4 sm:p-5 flex items-start gap-3"
-        >
-          <TrendingUp className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+      {/* ── Score hero — matches main tile style ── */}
+      <div className="bg-white rounded-3xl border-2 border-amac-blue/10 shadow-xl shadow-amac-blue/5 p-7 sm:p-10">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-black text-green-700">{personalBestMsg.headline}</p>
-            {personalBestMsg.sub && (
-              <p className="text-xs font-medium text-green-600 mt-0.5">{personalBestMsg.sub}</p>
+            <p className="text-base sm:text-lg font-black text-amac-dark/60 tracking-tight mb-1">
+              Today&apos;s Score
+            </p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-7xl sm:text-8xl font-black tracking-tight text-amac-blue leading-none">
+                {score}
+              </span>
+              <span className="text-3xl sm:text-4xl font-black text-neutral-300 leading-none">
+                /{totalQuestions}
+              </span>
+            </div>
+            {totalSeconds != null && (
+              <p className="text-sm font-black text-neutral-400 mt-1">{totalSeconds}s</p>
             )}
           </div>
-        </motion.div>
-      )}
+          <span className={`shrink-0 mt-1 px-3 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest ${tier.cls}`}>
+            {tier.label}
+          </span>
+        </div>
+        <p className="text-sm sm:text-base font-medium text-neutral-500 mt-4 leading-snug">
+          {getReinforcement(score, totalQuestions)}
+        </p>
+        {percentileMsg && (
+          <p className="text-xs font-black text-amac-blue/70 mt-1">{percentileMsg}</p>
+        )}
+      </div>
+
+      {/* ── Streak + personal best row — matches homepage tile style ── */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white border-2 border-amac-blue/10 rounded-2xl p-4 sm:p-5 flex items-center gap-3">
+          <div className="w-10 h-10 bg-amac-blue/5 rounded-xl flex items-center justify-center shrink-0">
+            <span className="text-xl">🔥</span>
+          </div>
+          <div>
+            <p className="text-base sm:text-lg font-black text-amac-red tracking-tight leading-none">
+              {streak > 0 ? `${streak}` : '—'}
+            </p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mt-0.5">
+              {streak > 1 ? 'Day Streak' : streak === 1 ? 'Day 1' : 'No Streak'}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white border-2 border-amac-blue/10 rounded-2xl p-4 sm:p-5 flex items-center gap-3">
+          <div className="w-10 h-10 bg-amac-blue/5 rounded-xl flex items-center justify-center shrink-0">
+            <span className="text-xl">📈</span>
+          </div>
+          <div>
+            {personalBestMsg ? (
+              <>
+                <p className="text-sm font-black text-green-600 leading-tight">{personalBestMsg.headline}</p>
+                {personalBestMsg.sub && (
+                  <p className="text-[10px] font-medium text-neutral-400 mt-0.5 leading-snug">{personalBestMsg.sub}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-base sm:text-lg font-black text-amac-dark tracking-tight leading-none">Progress</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mt-0.5">Keep showing up</p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* ── CTA area ── */}
       <AnimatePresence mode="wait">

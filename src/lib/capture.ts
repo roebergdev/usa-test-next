@@ -99,5 +99,5 @@ export function hasErrors(errors: CaptureErrors): boolean {
 // Adjust to match your legal/compliance requirements before launch.
 
 export const SMS_CONSENT_TEXT =
-  'By checking this box, you agree to receive automated daily quiz reminders from USA Test ' +
+  'By checking this box, you agree to receive automated quiz reminders from USA Test ' +
   'via text message. Message & data rates may apply. Reply STOP at any time to cancel.';
