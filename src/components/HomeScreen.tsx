@@ -76,11 +76,11 @@ function DailyQuizHero({
         </div>
 
         {/* Categories */}
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2">
           {['Civics', 'History', 'Geography', 'Culture', 'People', 'Landmarks'].map((cat) => (
             <span
               key={cat}
-              className="px-3 py-1 rounded-full bg-amac-blue/5 border border-amac-blue/10 text-[11px] sm:text-xs font-black text-amac-blue/70 uppercase tracking-widest"
+              className="px-3 py-1 rounded-full bg-amac-blue/5 border border-amac-blue/10 text-[11px] sm:text-xs font-black text-amac-blue/70 uppercase tracking-widest text-center"
             >
               {cat}
             </span>
