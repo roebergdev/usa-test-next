@@ -41,40 +41,6 @@ interface HomeScreenProps {
 
 // ─── Daily Quiz Hero ──────────────────────────────────────────────────────────
 
-function Typewriter({ text, typeSpeed = 80, eraseSpeed = 40, pauseMs = 1200 }: { text: string; typeSpeed?: number; eraseSpeed?: number; pauseMs?: number }) {
-  const [displayed, setDisplayed] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-    const delay = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
-
-    async function loop() {
-      while (!cancelled) {
-        // Type out
-        for (let i = 1; i <= text.length; i++) {
-          if (cancelled) return;
-          setDisplayed(text.slice(0, i));
-          await delay(typeSpeed);
-        }
-        // Pause at full text
-        await delay(pauseMs);
-        // Erase
-        for (let i = text.length - 1; i >= 0; i--) {
-          if (cancelled) return;
-          setDisplayed(text.slice(0, i));
-          await delay(eraseSpeed);
-        }
-        // Brief pause before retyping
-        await delay(300);
-      }
-    }
-
-    loop();
-    return () => { cancelled = true; };
-  }, [text, typeSpeed, eraseSpeed, pauseMs]);
-
-  return <span>{displayed}&nbsp;</span>;
-}
 
 function DailyQuizHero({
   dailyResult,
@@ -115,7 +81,7 @@ function DailyQuizHero({
             <div className="absolute -inset-1 bg-amac-red rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500" />
             <div className="relative px-8 sm:px-14 py-4 sm:py-5 bg-amac-red text-white rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl flex items-center justify-center gap-3 hover:bg-amac-red/90 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-xl shadow-amac-red/25">
               <Play className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
-              <Typewriter text="Let's Go" />
+              Let&apos;s Go
             </div>
           </button>
         )}
@@ -363,7 +329,7 @@ function PracticeRow({ onPlayPractice }: { onPlayPractice: () => void }) {
             <span className="text-2xl sm:text-3xl">🧠</span>
           </div>
           <div>
-            <div className="font-black text-lg sm:text-2xl text-amac-dark group-hover:text-amac-blue transition-colors tracking-tight">
+            <div className="font-black text-base sm:text-lg text-amac-dark group-hover:text-amac-blue transition-colors tracking-tight">
               Practice Mode
             </div>
           </div>
