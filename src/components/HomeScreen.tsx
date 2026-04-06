@@ -59,7 +59,7 @@ function DailyQuizHero({
       <div className="relative space-y-5 sm:space-y-7">
         {/* Headline */}
         <div>
-          <h2 className="text-4xl sm:text-6xl font-black tracking-tighter leading-[0.9] uppercase text-amac-dark">
+          <h2 className="text-5xl sm:text-7xl font-black tracking-tight leading-[0.95] uppercase text-amac-dark">
             Test your{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amac-blue to-amac-red">
               Knowledge.
