@@ -116,11 +116,10 @@ function DailyQuizHero({
         {/* State 3: played and score saved */}
         {dailyResult && scoreSaved && (
           <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-2xl">
-            <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
             <div>
               <div className="font-black text-green-700 flex items-baseline gap-2">
                 <span className="text-2xl">{dailyResult.score}/{dailyResult.totalQuestions}</span>
-                <span className="text-sm">Awesome!</span>
+                <span className="text-2xl">Awesome!</span>
               </div>
               <div className="text-xs text-green-600 font-medium">
                 Come back tomorrow to keep your streak going.
