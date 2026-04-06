@@ -156,8 +156,8 @@ export function GameBoard({
 
             {/* Factoid */}
             {hasExplanation && (
-              <div className="flex items-start gap-2.5 bg-white/60 rounded-xl p-3 border border-black/5">
-                <span className="text-base shrink-0">💡</span>
+              <div className="flex items-center gap-2.5 bg-white/60 rounded-xl p-3 border border-black/5">
+                <span className="text-2xl shrink-0">💡</span>
                 <p className="text-sm text-neutral-700 leading-relaxed font-medium">
                   {question.explanation}
                 </p>
