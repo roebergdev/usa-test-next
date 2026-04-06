@@ -70,7 +70,7 @@ function DailyQuizHero({
             <CalendarDays className="w-3 h-3" />
             Today&apos;s Quiz
           </div>
-          <p className="text-sm text-neutral-400 font-medium pl-1">{today}</p>
+          <p className="text-base sm:text-lg font-black text-amac-dark/70 tracking-tight pl-1">{today}</p>
         </div>
 
         {/* Headline */}
