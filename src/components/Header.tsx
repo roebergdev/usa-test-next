@@ -1,6 +1,6 @@
 'use client';
 
-import { Flag } from 'lucide-react';
+import Image from 'next/image';
 
 interface HeaderProps {
   onHome?: () => void;
@@ -21,9 +21,13 @@ export function Header({ onHome }: HeaderProps) {
           className="flex items-center gap-3 sm:gap-4 hover:opacity-80 transition-opacity"
           aria-label="Go to home"
         >
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amac-blue rounded-lg sm:rounded-xl flex items-center justify-center shadow-xl shadow-amac-blue/20 rotate-3">
-            <Flag className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="USA Test"
+            width={40}
+            height={40}
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl shadow-xl shadow-amac-blue/20"
+          />
           <span className="text-xl sm:text-2xl font-black tracking-tighter leading-none text-amac-blue">
             USA <span className="text-amac-red">TEST</span>
           </span>
