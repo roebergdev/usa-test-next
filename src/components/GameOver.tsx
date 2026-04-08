@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getRank } from '@/lib/constants';
 import { QuizMode, Question } from '@/lib/types';
 import { track } from '@/lib/analytics';
 import {
@@ -784,22 +783,12 @@ function PracticeResults({
         </h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:gap-6">
-        <div className="bg-white p-6 sm:p-10 rounded-2xl sm:rounded-[2.5rem] border border-amac-blue/5 shadow-xl shadow-amac-blue/5">
-          <div className="text-[8px] sm:text-[10px] text-neutral-400 uppercase tracking-widest font-black mb-1 sm:mb-2">
-            Final Rank
-          </div>
-          <div className="text-3xl sm:text-5xl font-black tracking-tighter text-amac-blue leading-tight">
-            {getRank(score).name}
-          </div>
+      <div className="bg-white p-8 sm:p-12 rounded-2xl sm:rounded-[2.5rem] border border-amac-blue/5 shadow-xl shadow-amac-blue/5">
+        <div className="text-[8px] sm:text-[10px] text-neutral-400 uppercase tracking-widest font-black mb-1 sm:mb-2">
+          Score
         </div>
-        <div className="bg-white p-6 sm:p-10 rounded-2xl sm:rounded-[2.5rem] border border-amac-blue/5 shadow-xl shadow-amac-blue/5">
-          <div className="text-[8px] sm:text-[10px] text-neutral-400 uppercase tracking-widest font-black mb-1 sm:mb-2">
-            Score
-          </div>
-          <div className="text-4xl sm:text-6xl font-black tracking-tighter text-amac-red">
-            {score}/{totalQuestions}
-          </div>
+        <div className="text-5xl sm:text-7xl font-black tracking-tighter text-amac-red">
+          {score}/{totalQuestions}
         </div>
       </div>
 
