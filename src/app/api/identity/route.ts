@@ -151,14 +151,10 @@ export async function POST(request: NextRequest) {
     state_code: stateCode,
   });
 
-  if (lbError) {
-    console.error('[api/identity] Failed to insert leaderboard entry:', lbError.message);
-    return NextResponse.json({ error: 'Failed to save score' }, { status: 500 });
-  }
-
   // ── 7. Leads record (raw capture) ───────────────────────────────────────────
   // Stored separately from users for CRM/marketing use. Not deduplicated here
   // since users is the canonical identity store.
+  // Saved before checking lbError so a leaderboard failure never silently drops a lead.
   await supabaseAdmin.from('leads').insert({
     name: resolvedDisplayName,
     phone: normalizedPhone,
@@ -166,6 +162,11 @@ export async function POST(request: NextRequest) {
     score,
     sms_consent: smsConsent,
   });
+
+  if (lbError) {
+    console.error('[api/identity] Failed to insert leaderboard entry:', lbError.message);
+    return NextResponse.json({ error: 'Failed to save score' }, { status: 500 });
+  }
 
   // ── 8. SMS notification (fire-and-forget) ───────────────────────────────────
   // Only sent when the user explicitly opted in via the SMS consent checkbox.

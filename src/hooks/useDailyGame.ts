@@ -5,7 +5,6 @@ import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
 import { Question } from '@/lib/types';
 import { TIMER_SECONDS } from '@/lib/constants';
 import {
-  getDailyQuestions,
   getDailyResult,
   saveDailyResultLocal,
   hasPlayedToday,
@@ -22,6 +21,7 @@ export function useDailyGame() {
   const { supabase } = useSupabaseContext();
 
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'gameOver'>('idle');
+  const [questionsLoading, setQuestionsLoading] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -69,17 +69,23 @@ export function useDailyGame() {
   // Restore state from localStorage on mount.
   useEffect(() => {
     const result = getDailyResult();
-    if (result) {
-      const qs = getDailyQuestions();
-      setQuestions(qs);
-      setScore(result.score);
-      setScoreSaved(hasSavedScore());
-      setStreak(getStreak());
-      setAlreadyPlayed(result);
-      if (result.timeSeconds !== undefined) setTotalSeconds(result.timeSeconds);
-      if (result.userAnswers) setUserAnswers(result.userAnswers);
-      setGameState('gameOver');
-    }
+    if (!result) return;
+
+    setScore(result.score);
+    setScoreSaved(hasSavedScore());
+    setStreak(getStreak());
+    setAlreadyPlayed(result);
+    if (result.timeSeconds !== undefined) setTotalSeconds(result.timeSeconds);
+    if (result.userAnswers) setUserAnswers(result.userAnswers);
+
+    // Fetch today's questions from the server so the game-over review screen works
+    fetch('/api/daily-questions')
+      .then((r) => r.json())
+      .then(({ questions: qs }: { questions: Question[] }) => {
+        if (qs?.length) setQuestions(qs);
+      })
+      .catch(() => {})
+      .finally(() => setGameState('gameOver'));
   }, []);
 
   // Timer
@@ -162,9 +168,26 @@ export function useDailyGame() {
     [persistResult]
   );
 
-  const startGame = () => {
+  const startGame = async () => {
     if (hasPlayedToday()) return;
-    const qs = getDailyQuestions();
+    setQuestionsLoading(true);
+
+    let qs: Question[] = [];
+    try {
+      const res = await fetch('/api/daily-questions');
+      const data = await res.json();
+      qs = data.questions ?? [];
+    } catch {
+      // If the fetch fails, abort — don't start with zero questions
+      setQuestionsLoading(false);
+      return;
+    }
+
+    if (qs.length === 0) {
+      setQuestionsLoading(false);
+      return;
+    }
+
     setQuestions(qs);
     setCurrentQuestionIndex(0);
     setScore(0);
@@ -175,6 +198,7 @@ export function useDailyGame() {
     setTimeLeft(TIMER_SECONDS);
     setUserAnswers([]);
     questionTimesRef.current = [];
+    setQuestionsLoading(false);
     setGameState('playing');
 
     track('daily_quiz_started', {
@@ -253,6 +277,7 @@ export function useDailyGame() {
 
   return {
     gameState,
+    questionsLoading,
     questions,
     currentQuestionIndex,
     score,
