@@ -115,7 +115,7 @@ export function GameBoard({
           <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${diff.cls}`}>
             {diff.label}
           </span>
-          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-neutral-400 px-2.5 py-1 bg-neutral-50 border border-neutral-200 rounded-full">
+          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amac-blue px-2.5 py-1 bg-amac-blue/8 border border-amac-blue/20 rounded-full">
             {question.category}
           </span>
         </div>
