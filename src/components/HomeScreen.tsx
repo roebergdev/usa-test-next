@@ -33,6 +33,16 @@ const PLACEHOLDER_ROWS = [
   { display_name: 'Mike D.', score: 3 },
 ];
 
+const HERO_PRACTICE_CATEGORIES = PRACTICE_CATEGORIES.filter(
+  (category) =>
+    ![
+      'Famous Americans',
+      'American Culture',
+      'National Parks',
+      'US Sports',
+    ].includes(category)
+);
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface HomeScreenProps {
@@ -122,7 +132,7 @@ function DailyQuizHero({
 
         {/* Categories — hidden once score is saved */}
         <div className={`flex flex-wrap gap-x-2 gap-y-3 mt-3 justify-center sm:justify-start ${dailyResult && scoreSaved ? 'hidden' : ''}`}>
-          {PRACTICE_CATEGORIES.map((category) => (
+          {HERO_PRACTICE_CATEGORIES.map((category) => (
             <button
               key={category}
               type="button"
