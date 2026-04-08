@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Flag } from 'lucide-react';
 
 interface FooterProps {
@@ -13,6 +14,14 @@ export function Footer({
   activeCategory,
   onSelectCategory,
 }: FooterProps) {
+  const footerLinks = [
+    { href: '/about', label: 'About Us' },
+    { href: '/faq', label: 'FAQ' },
+    { href: '/contact', label: 'Contact Us' },
+    { href: '/privacy', label: 'Privacy Policy' },
+    { href: '/terms', label: 'Terms of Service' },
+  ];
+
   return (
     <footer className="border-t border-amac-blue/5 py-8 sm:py-12 mt-12 sm:mt-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-6">
@@ -45,6 +54,18 @@ export function Footer({
               </button>
             );
           })}
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-x-5 gap-y-3 text-xs sm:text-sm font-bold text-neutral-500">
+          {footerLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="transition-colors hover:text-amac-blue"
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
       </div>
     </footer>
