@@ -12,13 +12,19 @@ function shuffleArray<T>(arr: T[]): T[] {
 }
 
 export async function POST(request: Request) {
-  const { difficulty, count = 3, excludeQuestions = [] } = await request.json();
+  const {
+    difficulty,
+    count = 3,
+    excludeQuestions = [],
+    category = null,
+  } = await request.json();
 
   if (!process.env.GEMINI_API_KEY) {
     const local = PREDEFINED_QUESTIONS.filter(
       (q) =>
         q.difficulty >= difficulty - 1 &&
         q.difficulty <= difficulty + 1 &&
+        (!category || q.category === category) &&
         !excludeQuestions.includes(q.text)
     );
     return NextResponse.json(shuffleArray(local).slice(0, count));
@@ -31,12 +37,15 @@ export async function POST(request: Request) {
       excludeQuestions.length > 0
         ? `\nDO NOT generate any of the following questions: ${excludeQuestions.join(', ')}`
         : '';
+    const categoryPart = category
+      ? `\nAll questions must belong to this category: ${category}.`
+      : '';
 
     const response = await ai.models.generateContent({
       model: 'gemini-flash-latest',
       contents: `Generate exactly ${count} multiple-choice trivia questions about the USA.
       Difficulty level: ${difficulty} (out of 10, where 1 is very easy and 10 is extremely hard).
-      Focus on history, geography, culture, and government.
+      Focus on history, geography, culture, and government.${categoryPart}
       The questions should get progressively harder.${excludePart}
       Return ONLY a JSON array.`,
       config: {
@@ -80,6 +89,7 @@ export async function POST(request: Request) {
       (q) =>
         q.difficulty >= difficulty - 1 &&
         q.difficulty <= difficulty + 1 &&
+        (!category || q.category === category) &&
         !excludeQuestions.includes(q.text)
     );
     return NextResponse.json(shuffleArray(local).slice(0, count));

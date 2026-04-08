@@ -8,7 +8,7 @@ import { TIMER_SECONDS, TOTAL_QUESTIONS } from '@/lib/constants';
 import { getUserDisplayName } from '@/lib/daily';
 import { track } from '@/lib/analytics';
 
-export function useGame() {
+export function useGame(category?: string | null) {
   const { supabase } = useSupabaseContext();
   const { fetchQuestions, generateQuestions } = useQuestions();
 
@@ -98,7 +98,9 @@ export function useGame() {
 
     try {
       const results = await Promise.all(
-        Array.from({ length: TOTAL_QUESTIONS }, (_, i) => fetchQuestions(i + 1, 5, []))
+        Array.from({ length: TOTAL_QUESTIONS }, (_, i) =>
+          fetchQuestions(i + 1, 5, [], category)
+        )
       );
 
       const allQuestions: Question[] = [];
@@ -107,7 +109,7 @@ export function useGame() {
       for (let i = 0; i < TOTAL_QUESTIONS; i++) {
         let pool = results[i].filter((q) => !asked.includes(q.text));
         if (pool.length === 0) {
-          const generated = await generateQuestions(i + 1, 1, asked);
+          const generated = await generateQuestions(i + 1, 1, asked, category);
           pool = generated;
         }
         if (pool.length > 0) {
@@ -127,6 +129,7 @@ export function useGame() {
       track('practice_mode_started', {
         quiz_mode: 'practice',
         question_count: allQuestions.length,
+        question_category: category ?? 'All Categories',
       });
     } catch (err) {
       console.error('Failed to start game:', err);

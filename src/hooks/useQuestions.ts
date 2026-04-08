@@ -19,14 +19,20 @@ export function useQuestions() {
   const fetchQuestions = async (
     difficulty: number,
     count: number = 1,
-    excludeQuestions: string[] = []
+    excludeQuestions: string[] = [],
+    category?: string | null
   ): Promise<Question[]> => {
     try {
-      const { data } = await supabase
+      let query = supabase
         .from('questions')
         .select('*')
-        .eq('difficulty', difficulty)
-        .limit(20);
+        .eq('difficulty', difficulty);
+
+      if (category) {
+        query = query.eq('category', category);
+      }
+
+      const { data } = await query.limit(20);
 
       const allQuestions = (data || []).map((q) => ({
         id: q.id,
@@ -45,6 +51,7 @@ export function useQuestions() {
         const localFallback = PREDEFINED_QUESTIONS.filter(
           (q) =>
             q.difficulty === difficulty &&
+            (!category || q.category === category) &&
             !excludeQuestions.includes(q.text)
         );
         const combined = [...filtered, ...localFallback];
@@ -57,6 +64,7 @@ export function useQuestions() {
       const localFallback = PREDEFINED_QUESTIONS.filter(
         (q) =>
           q.difficulty === difficulty &&
+          (!category || q.category === category) &&
           !excludeQuestions.includes(q.text)
       );
       return shuffleArray(localFallback).slice(0, count);
@@ -66,13 +74,14 @@ export function useQuestions() {
   const generateQuestions = async (
     difficulty: number,
     count: number = 1,
-    excludeQuestions: string[] = []
+    excludeQuestions: string[] = [],
+    category?: string | null
   ): Promise<Question[]> => {
     try {
       const res = await fetch('/api/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ difficulty, count, excludeQuestions }),
+        body: JSON.stringify({ difficulty, count, excludeQuestions, category }),
       });
       if (!res.ok) throw new Error('Failed to generate questions');
       return await res.json();
@@ -81,6 +90,7 @@ export function useQuestions() {
       const localFallback = PREDEFINED_QUESTIONS.filter(
         (q) =>
           q.difficulty === difficulty &&
+          (!category || q.category === category) &&
           !excludeQuestions.includes(q.text)
       );
       return shuffleArray(localFallback).slice(0, count);

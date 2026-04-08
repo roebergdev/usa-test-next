@@ -37,6 +37,8 @@ export interface AnalyticsProperties {
   score?: number;
   /** Total questions in the quiz */
   question_count?: number;
+  /** Selected category for category-scoped practice sessions */
+  question_category?: string;
   /** Consecutive-day streak at the time of the event */
   streak_count?: number;
   /** Whether the user has already saved their score to the leaderboard */

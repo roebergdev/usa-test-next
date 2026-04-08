@@ -142,3 +142,15 @@ export const PREDEFINED_QUESTIONS: Question[] = [
   { id: "fam-09", category: "Famous Americans", difficulty: 8, text: "Who was the first US Secretary of State, serving under President George Washington?", options: ["Alexander Hamilton", "John Jay", "James Madison", "Thomas Jefferson"], correctAnswer: "Thomas Jefferson" },
   { id: "fam-10", category: "Famous Americans", difficulty: 9, text: "Which scientist's X-ray crystallography work was essential to discovering the structure of DNA, though she was denied credit during her lifetime?", options: ["Marie Curie", "Barbara McClintock", "Rosalind Franklin", "Lise Meitner"], correctAnswer: "Rosalind Franklin" },
 ];
+
+export const PRACTICE_CATEGORIES = [
+  'American Culture',
+  'Civics',
+  'Famous Americans',
+  'Geography',
+  'Landmarks',
+  'Military',
+  'National Parks',
+  'US History',
+  'US Sports',
+] as const;

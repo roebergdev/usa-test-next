@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { PRACTICE_CATEGORIES } from '@/data/questions';
 import { useGame } from '@/hooks/useGame';
 import { useDailyGame } from '@/hooks/useDailyGame';
 import { Header } from '@/components/Header';
@@ -107,8 +108,14 @@ function DailyGameApp({
 }
 
 // Practice sub-app — owns useGame hook
-function PracticeGameApp({ onBack }: { onBack: () => void }) {
-  const game = useGame();
+function PracticeGameApp({
+  onBack,
+  category,
+}: {
+  onBack: () => void;
+  category: string | null;
+}) {
+  const game = useGame(category);
 
   useEffect(() => {
     if (game.gameState === 'lobby' && !game.loading) {
@@ -158,6 +165,14 @@ function PracticeGameApp({ onBack }: { onBack: () => void }) {
 
 export default function Home() {
   const [screen, setScreen] = useState<AppScreen>('home');
+  const [practiceCategory, setPracticeCategory] = useState<string | null>(null);
+  const [practiceRunId, setPracticeRunId] = useState(0);
+
+  const startPractice = (category: string | null = null) => {
+    setPracticeCategory(category);
+    setPracticeRunId((prev) => prev + 1);
+    setScreen('practice');
+  };
 
   return (
     <div className="min-h-screen bg-amac-gray text-amac-dark font-sans selection:bg-amac-blue/10">
@@ -169,7 +184,7 @@ export default function Home() {
             <HomeScreen
               key="home"
               onPlayDaily={() => setScreen('daily')}
-              onPlayPractice={() => setScreen('practice')}
+              onPlayPractice={() => startPractice()}
             />
           )}
 
@@ -177,17 +192,25 @@ export default function Home() {
             <DailyGameApp
               key="daily"
               onBack={() => setScreen('home')}
-              onPlayPractice={() => setScreen('practice')}
+              onPlayPractice={() => startPractice()}
             />
           )}
 
           {screen === 'practice' && (
-            <PracticeGameApp key="practice" onBack={() => setScreen('home')} />
+            <PracticeGameApp
+              key={`practice-${practiceCategory ?? 'all'}-${practiceRunId}`}
+              onBack={() => setScreen('home')}
+              category={practiceCategory}
+            />
           )}
         </AnimatePresence>
       </main>
 
-      <Footer />
+      <Footer
+        categories={PRACTICE_CATEGORIES}
+        activeCategory={screen === 'practice' ? practiceCategory : null}
+        onSelectCategory={(category) => startPractice(category)}
+      />
     </div>
   );
 }
