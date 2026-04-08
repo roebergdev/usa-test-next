@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { PRACTICE_CATEGORIES } from '@/data/questions';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { motion } from 'motion/react';
 import {
@@ -37,6 +38,7 @@ const PLACEHOLDER_ROWS = [
 interface HomeScreenProps {
   onPlayDaily: () => void;
   onPlayPractice: () => void;
+  onPlayPracticeCategory: (category: string) => void;
 }
 
 // ─── Daily Quiz Hero ──────────────────────────────────────────────────────────
@@ -46,10 +48,12 @@ function DailyQuizHero({
   dailyResult,
   scoreSaved,
   onPlayDaily,
+  onPlayPracticeCategory,
 }: {
   dailyResult: DailyResult | null;
   scoreSaved: boolean;
   onPlayDaily: () => void;
+  onPlayPracticeCategory: (category: string) => void;
 }) {
   const [countdown, setCountdown] = useState('');
   const [copied, setCopied] = useState(false);
@@ -118,13 +122,15 @@ function DailyQuizHero({
 
         {/* Categories — hidden once score is saved */}
         <div className={`flex flex-wrap gap-x-2 gap-y-3 mt-3 justify-center sm:justify-start ${dailyResult && scoreSaved ? 'hidden' : ''}`}>
-          {['Civics', 'History', 'Geography', 'Culture', 'People', 'Landmarks'].map((cat) => (
-            <span
-              key={cat}
-              className="px-3 py-1 rounded-full bg-amac-blue/5 border border-amac-blue/10 text-[11px] sm:text-xs font-black text-amac-blue/70 uppercase tracking-widest"
+          {PRACTICE_CATEGORIES.map((category) => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => onPlayPracticeCategory(category)}
+              className="px-3 py-1 rounded-full bg-amac-blue/8 border border-amac-blue/15 text-[11px] sm:text-xs font-black text-amac-blue uppercase tracking-widest hover:bg-amac-blue/12 transition-colors"
             >
-              {cat === 'Civics' ? `\u00A0${cat}\u00A0` : cat}
-            </span>
+              {category}
+            </button>
           ))}
         </div>
 
@@ -371,28 +377,24 @@ function PracticeRow({ onPlayPractice }: { onPlayPractice: () => void }) {
 
 // ─── Home Screen ──────────────────────────────────────────────────────────────
 
-export function HomeScreen({ onPlayDaily, onPlayPractice }: HomeScreenProps) {
-  const [dailyResult, setDailyResult] = useState<DailyResult | null>(null);
-  const [scoreSaved, setScoreSaved] = useState(false);
-  const [streak, setStreak] = useState(0);
-  const [atRiskStreak, setAtRiskStreak] = useState(0);
+export function HomeScreen({
+  onPlayDaily,
+  onPlayPractice,
+  onPlayPracticeCategory,
+}: HomeScreenProps) {
+  const [dailyResult] = useState<DailyResult | null>(() => getDailyResult());
+  const [scoreSaved] = useState(() => hasSavedScore());
+  const [streak] = useState(() => getStreak());
+  const [atRiskStreak] = useState(() => getYesterdayStreak());
 
   useEffect(() => {
-    const result = getDailyResult();
-    const saved = hasSavedScore();
-    const streakCount = getStreak();
-    setDailyResult(result);
-    setScoreSaved(saved);
-    setStreak(streakCount);
-    setAtRiskStreak(getYesterdayStreak());
-
     track('home_viewed', {
       quiz_mode: 'daily',
-      has_saved_score: saved,
-      streak_count: streakCount,
+      has_saved_score: scoreSaved,
+      streak_count: streak,
       date: getTodayString(),
     });
-  }, []);
+  }, [scoreSaved, streak]);
 
   const playedToday = dailyResult !== null;
 
@@ -405,7 +407,12 @@ export function HomeScreen({ onPlayDaily, onPlayPractice }: HomeScreenProps) {
       className="max-w-2xl mx-auto space-y-4"
     >
       {/* 1 — Daily Quiz (dominant) */}
-      <DailyQuizHero dailyResult={dailyResult} scoreSaved={scoreSaved} onPlayDaily={onPlayDaily} />
+      <DailyQuizHero
+        dailyResult={dailyResult}
+        scoreSaved={scoreSaved}
+        onPlayDaily={onPlayDaily}
+        onPlayPracticeCategory={onPlayPracticeCategory}
+      />
 
       {/* 2 — Practice mode */}
       <PracticeRow onPlayPractice={onPlayPractice} />

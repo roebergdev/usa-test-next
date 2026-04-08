@@ -185,6 +185,7 @@ export default function Home() {
               key="home"
               onPlayDaily={() => setScreen('daily')}
               onPlayPractice={() => startPractice()}
+              onPlayPracticeCategory={(category) => startPractice(category)}
             />
           )}
 
