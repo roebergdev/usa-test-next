@@ -10,7 +10,7 @@ interface TimerProps {
 export function Timer({ timeLeft }: TimerProps) {
   return (
     <div className="relative w-12 h-12 sm:w-16 sm:h-16">
-      <svg className="w-full h-full -rotate-90">
+      <svg className="w-full h-full -rotate-90 scale-x-[-1]">
         <circle
           cx="24"
           cy="24"
