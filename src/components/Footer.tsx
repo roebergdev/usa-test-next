@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Flag } from 'lucide-react';
+import Image from 'next/image';
 
 interface FooterProps {
   categories: readonly string[];
@@ -27,7 +27,13 @@ export function Footer({
       <div className="max-w-7xl mx-auto px-4 sm:px-8 space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3 opacity-50 text-amac-blue">
-            <Flag className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Image
+              src="/logo.png"
+              alt="USA Test"
+              width={40}
+              height={40}
+              className="w-8 h-8 rounded-lg shadow-xl shadow-amac-blue/10"
+            />
             <span className="font-bold tracking-tight text-sm sm:text-base">USA TEST</span>
           </div>
           <p className="text-neutral-400 text-[10px] sm:text-xs font-medium">

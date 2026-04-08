@@ -23,22 +23,13 @@ export const metadata: Metadata = {
       'Put your knowledge to the test - 5 questions daily, find out where you rank.',
     url: 'https://usatest.co',
     siteName: 'USA Test',
-    images: [
-      {
-        url: '/logo.png',
-        width: 4000,
-        height: 4000,
-        alt: 'USA Test',
-      },
-    ],
     type: 'website',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'USA Test - Learn History for Free',
     description:
       'Put your knowledge to the test - 5 questions daily, find out where you rank.',
-    images: ['/logo.png'],
   },
 };
 
