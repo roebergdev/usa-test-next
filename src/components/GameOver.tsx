@@ -748,6 +748,8 @@ function PracticeResults({
   onSaveScore,
   onRestart,
   onGoToLobby,
+  questions = [],
+  userAnswers = [],
 }: {
   score: number;
   totalQuestions: number;
@@ -756,9 +758,12 @@ function PracticeResults({
   onSaveScore?: (name: string) => Promise<void>;
   onRestart?: () => void;
   onGoToLobby: () => void;
+  questions?: Question[];
+  userAnswers?: string[];
 }) {
   const [nameInput, setNameInput] = useState(playerName);
   const [saving, setSaving] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -769,6 +774,7 @@ function PracticeResults({
   };
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -826,6 +832,15 @@ function PracticeResults({
       )}
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
+        {questions.length > 0 && (
+          <button
+            onClick={() => setShowResults(true)}
+            className="w-full sm:w-auto px-12 py-4 sm:py-6 bg-amac-blue/10 text-amac-blue rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl hover:bg-amac-blue/20 transition-all hover:scale-105 active:scale-95 border border-amac-blue/10 flex items-center justify-center gap-3"
+          >
+            <span>📋</span>
+            REVIEW
+          </button>
+        )}
         {onRestart && (
           <button
             onClick={onRestart}
@@ -844,6 +859,86 @@ function PracticeResults({
         </button>
       </div>
     </motion.div>
+
+    {/* ── Bottom sheet: results review ── */}
+    <AnimatePresence>
+      {showResults && (
+        <>
+          <motion.div
+            key="practice-results-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setShowResults(false)}
+          />
+          <motion.div
+            key="practice-results-sheet"
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-neutral-200 rounded-full" />
+            </div>
+            <div className="p-5 sm:p-8 pb-10 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-black text-amac-dark text-lg">Your Results</h3>
+                <span className="text-sm font-black text-amac-blue">{score}/{totalQuestions}</span>
+              </div>
+              {questions.length === 0 ? (
+                <p className="text-sm text-neutral-400 font-medium text-center py-8">Results not available.</p>
+              ) : (
+                <div className="space-y-3">
+                  {questions.map((q, i) => {
+                    const userAnswer = userAnswers[i];
+                    const timedOut = userAnswer === '';
+                    const correct = userAnswer === q.correctAnswer;
+                    return (
+                      <div
+                        key={q.id}
+                        className={`rounded-2xl border p-4 space-y-2 ${
+                          correct ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className={`text-xs font-black shrink-0 mt-0.5 ${correct ? 'text-green-600' : 'text-red-500'}`}>
+                            {correct ? '✓' : '✗'}
+                          </span>
+                          <p className="text-sm font-black text-amac-dark leading-snug">{q.text}</p>
+                        </div>
+                        {!correct && (
+                          <div className="pl-4 space-y-1">
+                            <p className="text-xs font-medium text-red-500">
+                              Your answer: <span className="font-black">{timedOut ? "Time's up" : userAnswer || '—'}</span>
+                            </p>
+                            <p className="text-xs font-medium text-green-700">
+                              Correct: <span className="font-black">{q.correctAnswer}</span>
+                            </p>
+                          </div>
+                        )}
+                        {correct && (
+                          <p className="pl-4 text-xs font-black text-green-700">{q.correctAnswer}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <button
+                onClick={() => setShowResults(false)}
+                className="w-full py-3.5 bg-amac-gray text-neutral-500 rounded-xl font-black text-sm hover:bg-neutral-200 transition-all mt-2"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
 
@@ -891,6 +986,8 @@ export function GameOver({
       onSaveScore={onSaveScore}
       onRestart={onRestart}
       onGoToLobby={onGoToLobby}
+      questions={questions}
+      userAnswers={userAnswers}
     />
   );
 }

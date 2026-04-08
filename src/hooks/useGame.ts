@@ -21,14 +21,17 @@ export function useGame() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
+  const [userAnswers, setUserAnswers] = useState<string[]>([]);
 
   const gameStateRef = useRef(gameState);
   const currentQuestionIndexRef = useRef(currentQuestionIndex);
   const questionsRef = useRef(questions);
+  const userAnswersRef = useRef(userAnswers);
 
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
   useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
   useEffect(() => { questionsRef.current = questions; }, [questions]);
+  useEffect(() => { userAnswersRef.current = userAnswers; }, [userAnswers]);
 
   // Timer logic
   useEffect(() => {
@@ -39,6 +42,7 @@ export function useGame() {
       return () => clearTimeout(timer);
     }
 
+    setUserAnswers((prev) => [...prev, '']);
     setSelectedAnswer('');
     setIsCorrect(false);
     playSound(false);
@@ -90,6 +94,7 @@ export function useGame() {
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
     setIsCorrect(null);
+    setUserAnswers([]);
 
     try {
       const results = await Promise.all(
@@ -138,6 +143,7 @@ export function useGame() {
     if (!currentQ) return;
 
     const correct = answer === currentQ.correctAnswer;
+    setUserAnswers((prev) => [...prev, answer]);
     setSelectedAnswer(answer);
     setIsCorrect(correct);
     playSound(correct);
@@ -165,6 +171,7 @@ export function useGame() {
     timeLeft,
     totalQuestions: questions.length,
     playerName: getUserDisplayName(),
+    userAnswers,
     startGame,
     handleAnswer,
     continueToNext,
