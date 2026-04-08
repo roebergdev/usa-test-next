@@ -10,7 +10,7 @@ interface TimerProps {
 export function Timer({ timeLeft }: TimerProps) {
   return (
     <div className="relative w-12 h-12 sm:w-16 sm:h-16">
-      <svg className="w-full h-full -rotate-90 scale-x-[-1]">
+      <svg className="w-full h-full -rotate-90">
         <circle
           cx="24"
           cy="24"
@@ -32,8 +32,8 @@ export function Timer({ timeLeft }: TimerProps) {
           className="stroke-amac-red fill-none sm:hidden"
           strokeWidth="3"
           strokeDasharray="125.6"
-          initial={{ strokeDashoffset: 125.6 }}
-          animate={{ strokeDashoffset: 125.6 * (1 - timeLeft / TIMER_SECONDS) }}
+          initial={{ strokeDashoffset: -125.6 }}
+          animate={{ strokeDashoffset: -125.6 * (1 - timeLeft / TIMER_SECONDS) }}
         />
         <motion.circle
           cx="32"
@@ -42,8 +42,8 @@ export function Timer({ timeLeft }: TimerProps) {
           className="stroke-amac-red fill-none hidden sm:block"
           strokeWidth="4"
           strokeDasharray="175.9"
-          initial={{ strokeDashoffset: 175.9 }}
-          animate={{ strokeDashoffset: 175.9 * (1 - timeLeft / TIMER_SECONDS) }}
+          initial={{ strokeDashoffset: -175.9 }}
+          animate={{ strokeDashoffset: -175.9 * (1 - timeLeft / TIMER_SECONDS) }}
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
