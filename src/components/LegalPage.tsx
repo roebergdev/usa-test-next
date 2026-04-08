@@ -2,8 +2,8 @@ import Link from 'next/link';
 
 interface LegalSection {
   title: string;
-  paragraphs?: string[];
-  bullets?: string[];
+  paragraphs?: readonly string[];
+  bullets?: readonly string[];
 }
 
 interface LegalPageProps {
@@ -11,7 +11,7 @@ interface LegalPageProps {
   title: string;
   intro: string;
   effectiveDate: string;
-  sections: LegalSection[];
+  sections: readonly LegalSection[];
 }
 
 export function LegalPage({
