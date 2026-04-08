@@ -37,11 +37,15 @@ const HERO_PRACTICE_CATEGORIES = PRACTICE_CATEGORIES.filter(
   (category) =>
     ![
       'Famous Americans',
-      'American Culture',
       'National Parks',
       'US Sports',
     ].includes(category)
 );
+
+function getHeroCategoryLabel(category: string) {
+  if (category === 'American Culture') return 'Culture';
+  return category;
+}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -139,7 +143,7 @@ function DailyQuizHero({
               onClick={() => onPlayPracticeCategory(category)}
               className="px-3 py-1 rounded-full bg-amac-blue/8 border border-amac-blue/15 text-[11px] sm:text-xs font-black text-amac-blue uppercase tracking-widest hover:bg-amac-blue/12 transition-colors"
             >
-              {category}
+              {getHeroCategoryLabel(category)}
             </button>
           ))}
         </div>
