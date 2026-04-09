@@ -61,22 +61,18 @@ export default function Image() {
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div
+              <img
+                src="https://usatest.co/logo.png"
+                alt="USA Test logo"
+                width="64"
+                height="64"
                 style={{
                   width: '64px',
                   height: '64px',
                   borderRadius: '18px',
-                  background: '#003366',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '26px',
-                  fontWeight: 900,
+                  boxShadow: '0 12px 24px rgba(0, 51, 102, 0.16)',
                 }}
-              >
-                US
-              </div>
+              />
               <div style={{ display: 'flex', alignItems: 'baseline' }}>
                 <span
                   style={{
