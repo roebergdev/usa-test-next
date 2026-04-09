@@ -348,15 +348,15 @@ function DailyResults({
               <p className="text-sm font-black text-neutral-400 mt-1">{totalSeconds}s</p>
             )}
           </div>
-          <span className={`shrink-0 mt-1 px-4 py-2 rounded-full border text-xs font-black uppercase tracking-widest ${tier.cls}`}>
+          <span className={`shrink-0 mt-1 px-5 sm:px-6 py-3 rounded-full border-2 text-sm sm:text-base font-black uppercase tracking-[0.16em] shadow-sm ${tier.cls}`}>
             {tier.label}
           </span>
         </div>
-        <p className="text-sm sm:text-base font-medium text-neutral-500 mt-4 leading-snug">
+        <p className="text-lg sm:text-2xl font-black text-amac-dark mt-5 leading-tight tracking-tight">
           {getReinforcement(score, totalQuestions)}
         </p>
         {percentileMsg && (
-          <p className="text-xs font-black text-amac-blue/70 mt-1">{percentileMsg}</p>
+          <p className="text-sm sm:text-base font-black text-amac-blue/80 mt-2">{percentileMsg}</p>
         )}
       </div>
 
