@@ -115,13 +115,16 @@ function DailyQuizHero({
 
       <div className="relative space-y-5 sm:space-y-7">
         {/* Headline */}
-        <div>
+        <div className="space-y-3">
           <h2 className="text-4xl sm:text-7xl font-black tracking-tight leading-[0.95] uppercase text-amac-dark">
-            Test your{' '}
+            How Smart{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-amac-blue to-amac-red">
-              Knowledge.
+              Are You?
             </span>
           </h2>
+          <p className="text-sm sm:text-lg font-black tracking-tight text-amac-dark/65">
+            Take the 5-question Daily USA Test
+          </p>
         </div>
 
         {/* State 1: not played */}
@@ -129,7 +132,7 @@ function DailyQuizHero({
           <button onClick={onPlayDaily} className="group relative w-full sm:w-fit mb-4 sm:mb-6">
             <div className="absolute -inset-1 bg-amac-red rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500" />
             <div className="relative px-8 sm:px-14 py-4 sm:py-5 bg-amac-red text-white rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-xl shadow-amac-red/25">
-              Start
+              Start Test
             </div>
           </button>
         )}
