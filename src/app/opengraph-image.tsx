@@ -109,7 +109,7 @@ export default function Image() {
                   maxWidth: '820px',
                 }}
               >
-                Are you Smart?
+                Are You Smart?
               </div>
               <div
                 style={{
