@@ -15,7 +15,6 @@ export function Footer({
   onSelectCategory,
 }: FooterProps) {
   const footerLinks = [
-    { href: '/about', label: 'About Us' },
     { href: '/faq', label: 'FAQ' },
     { href: '/contact', label: 'Contact Us' },
     { href: '/privacy', label: 'Privacy Policy' },

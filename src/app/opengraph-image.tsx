@@ -113,7 +113,7 @@ export default function Image() {
                   maxWidth: '820px',
                 }}
               >
-                Learn History. Take the Daily Test.
+                Are you Smart?
               </div>
               <div
                 style={{
