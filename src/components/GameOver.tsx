@@ -39,8 +39,6 @@ interface GameOverProps {
   onRestart?: () => void;
   onGoToLobby: () => void;
   onPlayPractice?: () => void;
-  /** Practice mode — simple name entry */
-  onSaveScore?: (name: string) => Promise<void>;
   /** Daily mode — full contact capture */
   onSaveDailyContact?: (
     firstName: string,
@@ -49,7 +47,6 @@ interface GameOverProps {
     smsConsent: boolean
   ) => Promise<void>;
   scoreSaved: boolean;
-  playerName?: string;
   streak?: number;
   /** Total seconds taken across all questions — used for tiebreaking display */
   totalSeconds?: number | null;
@@ -743,9 +740,6 @@ function DailyResults({
 function PracticeResults({
   score,
   totalQuestions,
-  scoreSaved,
-  playerName,
-  onSaveScore,
   onRestart,
   onGoToLobby,
   questions = [],
@@ -753,25 +747,12 @@ function PracticeResults({
 }: {
   score: number;
   totalQuestions: number;
-  scoreSaved: boolean;
-  playerName: string;
-  onSaveScore?: (name: string) => Promise<void>;
   onRestart?: () => void;
   onGoToLobby: () => void;
   questions?: Question[];
   userAnswers?: string[];
 }) {
-  const [nameInput, setNameInput] = useState(playerName);
-  const [saving, setSaving] = useState(false);
   const [showResults, setShowResults] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nameInput.trim() || saving) return;
-    setSaving(true);
-    await onSaveScore?.(nameInput.trim());
-    setSaving(false);
-  };
 
   return (
     <>
@@ -797,39 +778,6 @@ function PracticeResults({
           {score}/{totalQuestions}
         </div>
       </div>
-
-      {score > 0 && !scoreSaved && (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-amac-blue/5 shadow-xl shadow-amac-blue/5">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Trophy className="w-5 h-5 text-amac-blue" />
-            <span className="text-sm font-black text-amac-blue uppercase tracking-widest">
-              Save Your Score
-            </span>
-          </div>
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="text"
-              maxLength={30}
-              placeholder="Enter your name"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              className="flex-1 px-4 py-3 bg-amac-gray border border-amac-blue/10 focus:border-amac-blue/30 rounded-xl outline-none transition-all font-bold text-amac-dark text-center sm:text-left"
-              required
-            />
-            <button
-              type="submit"
-              disabled={!nameInput.trim() || saving}
-              className="px-6 py-3 bg-amac-blue text-white rounded-xl font-black hover:bg-amac-blue/90 transition-all disabled:opacity-50"
-            >
-              {saving ? 'SAVING...' : 'SUBMIT'}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {scoreSaved && (
-        <div className="text-sm font-bold text-green-600">You&apos;re on the leaderboard.</div>
-      )}
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
         {questions.length > 0 && (
@@ -951,10 +899,8 @@ export function GameOver({
   onRestart,
   onGoToLobby,
   onPlayPractice,
-  onSaveScore,
   onSaveDailyContact,
   scoreSaved,
-  playerName = '',
   streak = 0,
   totalSeconds,
   questions,
@@ -981,9 +927,6 @@ export function GameOver({
     <PracticeResults
       score={score}
       totalQuestions={totalQuestions}
-      scoreSaved={scoreSaved}
-      playerName={playerName}
-      onSaveScore={onSaveScore}
       onRestart={onRestart}
       onGoToLobby={onGoToLobby}
       questions={questions}

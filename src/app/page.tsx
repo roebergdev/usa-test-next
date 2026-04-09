@@ -152,9 +152,7 @@ function PracticeGameApp({
           totalQuestions={game.totalQuestions}
           onRestart={game.startGame}
           onGoToLobby={onBack}
-          onSaveScore={game.saveScoreWithName}
           scoreSaved={game.scoreSaved}
-          playerName={game.playerName}
           questions={game.questions}
           userAnswers={game.userAnswers}
         />
