@@ -154,6 +154,10 @@ export function useDailyGame() {
       const idx = currentQuestionIndexRef.current;
       const total = questionsRef.current.length;
 
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+
       setSelectedAnswer(null);
       setIsCorrect(null);
 

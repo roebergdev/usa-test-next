@@ -62,6 +62,10 @@ export function useGame(category?: string | null) {
     const idx = currentQuestionIndexRef.current;
     const total = questionsRef.current.length;
 
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
     setSelectedAnswer(null);
     setIsCorrect(null);
 
