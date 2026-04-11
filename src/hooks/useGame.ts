@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
-import { useQuestions } from '@/hooks/useQuestions';
+import { useQuestions, getSeenIds, addSeenIds } from '@/hooks/useQuestions';
 import { Question } from '@/lib/types';
 import { TIMER_SECONDS, TOTAL_QUESTIONS } from '@/lib/constants';
 import { getUserDisplayName } from '@/lib/daily';
@@ -10,7 +10,7 @@ import { track } from '@/lib/analytics';
 
 export function useGame(category?: string | null) {
   const { supabase } = useSupabaseContext();
-  const { fetchQuestions, generateQuestions } = useQuestions();
+  const { fetchQuestionsByRange, generateQuestions } = useQuestions();
 
   const [gameState, setGameState] = useState<'lobby' | 'playing' | 'gameOver'>('lobby');
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -101,51 +101,25 @@ export function useGame(category?: string | null) {
     setUserAnswers([]);
 
     try {
-      // Fetch candidate pools for each difficulty bucket in parallel
-      // Easy: difficulties 1-2 (5 questions), Medium: 3-5 (3 questions), Hard: 6-10 (2 questions)
-      const [easyResults, mediumResults, hardResults] = await Promise.all([
-        Promise.all([1, 2].map((d) => fetchQuestions(d, 4, [], category))),
-        Promise.all([3, 4, 5].map((d) => fetchQuestions(d, 3, [], category))),
-        Promise.all([6, 7, 8, 9, 10].map((d) => fetchQuestions(d, 2, [], category))),
+      // Exclude questions seen in previous games (stored in localStorage)
+      const seenIds = getSeenIds();
+
+      // Fetch from difficulty ranges in parallel
+      // Easy: 1-2 (5 questions), Medium: 3-5 (3 questions), Hard: 6-10 (2 questions)
+      const [easy, medium, hard] = await Promise.all([
+        fetchQuestionsByRange(1, 2, 5, seenIds, category),
+        fetchQuestionsByRange(3, 5, 3, seenIds, category),
+        fetchQuestionsByRange(6, 10, 2, seenIds, category),
       ]);
 
-      const shuffle = <T>(arr: T[]): T[] => {
-        const a = [...arr];
-        for (let i = a.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [a[i], a[j]] = [a[j], a[i]];
-        }
-        return a;
-      };
-
-      const pickUnique = (pool: Question[], count: number, asked: string[]): Question[] => {
-        const picked: Question[] = [];
-        for (const q of pool) {
-          if (picked.length >= count) break;
-          if (!asked.includes(q.text)) {
-            picked.push(q);
-            asked.push(q.text);
-          }
-        }
-        return picked;
-      };
-
-      const allQuestions: Question[] = [];
-      const asked: string[] = [];
-
-      const buckets: [Question[], number][] = [
-        [shuffle(easyResults.flat()), 5],
-        [shuffle(mediumResults.flat()), 3],
-        [shuffle(hardResults.flat()), 2],
-      ];
-
-      for (const [pool, count] of buckets) {
-        allQuestions.push(...pickUnique(pool, count, asked));
-      }
+      const allQuestions: Question[] = [...easy, ...medium, ...hard];
 
       if (allQuestions.length === 0) {
         throw new Error('Could not load questions. Please try again.');
       }
+
+      // Mark these questions as seen so they won't repeat in future games
+      addSeenIds(allQuestions.map((q) => q.id));
 
       setQuestions(allQuestions);
       setGameState('playing');
