@@ -16,16 +16,18 @@ interface Stats {
 export default function AdminDashboard() {
   const { supabase } = useSupabaseContext();
   const [stats, setStats] = useState<Stats | null>(null);
-  const [recentGames, setRecentGames] = useState<{ display_name: string; score: number; created_at: string }[]>([]);
+  const [recentGames, setRecentGames] = useState<{ display_name: string; score: number; created_at: string; source: 'leaderboard' | 'daily' }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
-      const [leaderboard, leads, questions, leaderboardCount] = await Promise.all([
-        supabase.from('leaderboard').select('display_name, score, created_at').order('created_at', { ascending: false }).limit(10),
+      const [leaderboard, dailyResults, leads, questions, leaderboardCount, dailyCount] = await Promise.all([
+        supabase.from('leaderboard').select('display_name, score, created_at').order('created_at', { ascending: false }).limit(20),
+        supabase.from('daily_results').select('score, created_at').order('created_at', { ascending: false }).limit(20),
         supabase.from('leads').select('id', { count: 'exact', head: true }),
         supabase.from('questions').select('category', { count: 'exact' }),
         supabase.from('leaderboard').select('id', { count: 'exact', head: true }),
+        supabase.from('daily_results').select('id', { count: 'exact', head: true }),
       ]);
 
       const entries = leaderboard.data || [];
@@ -34,7 +36,7 @@ export default function AdminDashboard() {
       const categories = new Set((questions.data || []).map((q) => q.category));
 
       setStats({
-        totalGames: leaderboardCount.count || 0,
+        totalGames: (leaderboardCount.count || 0) + (dailyCount.count || 0),
         uniquePlayers: uniqueNames.size,
         totalLeads: leads.count || 0,
         totalQuestions: questions.count || 0,
@@ -42,7 +44,14 @@ export default function AdminDashboard() {
         categories: categories.size,
       });
 
-      setRecentGames(entries);
+      const combined = [
+        ...entries.map((e) => ({ display_name: e.display_name, score: e.score, created_at: e.created_at, source: 'leaderboard' as const })),
+        ...(dailyResults.data || []).map((e) => ({ display_name: 'Daily Quiz', score: e.score, created_at: e.created_at, source: 'daily' as const })),
+      ]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 10);
+
+      setRecentGames(combined);
       setLoading(false);
     }
 
@@ -93,7 +102,12 @@ export default function AdminDashboard() {
             recentGames.map((game, i) => (
               <div key={i} className="px-6 py-4 flex items-center justify-between">
                 <div>
-                  <p className="text-white font-medium">{game.display_name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-white font-medium">{game.display_name}</p>
+                    {game.source === 'daily' && (
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400">daily</span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400">
                     {new Date(game.created_at).toLocaleDateString('en-US', {
                       month: 'short',
