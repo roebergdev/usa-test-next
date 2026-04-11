@@ -6,11 +6,7 @@ import { Question } from '@/lib/types';
 const DAILY_DIFFICULTIES = [1, 2, 4, 5, 7] as const;
 
 function getTodayString(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 }
 
 function dateStringToSeed(dateStr: string): number {
