@@ -23,18 +23,14 @@ export function useQuestions() {
     category?: string | null
   ): Promise<Question[]> => {
     try {
-      let query = supabase
-        .from('questions')
-        .select('*')
-        .eq('difficulty', difficulty);
+      const { data } = await supabase.rpc('get_random_questions', {
+        p_difficulty: difficulty,
+        p_count: count,
+        p_category: category ?? null,
+        p_exclude: excludeQuestions,
+      });
 
-      if (category) {
-        query = query.eq('category', category);
-      }
-
-      const { data } = await query.limit(20);
-
-      const allQuestions = (data || []).map((q) => ({
+      const allQuestions = (data || []).map((q: { id: string; text: string; options: string[]; correct_answer: string; difficulty: number; category: string }) => ({
         id: q.id,
         text: q.text,
         options: q.options,
@@ -43,22 +39,18 @@ export function useQuestions() {
         category: q.category,
       })) as Question[];
 
-      const filtered = allQuestions.filter(
-        (q) => !excludeQuestions.includes(q.text)
-      );
-
-      if (filtered.length < count) {
+      if (allQuestions.length < count) {
         const localFallback = PREDEFINED_QUESTIONS.filter(
           (q) =>
             q.difficulty === difficulty &&
             (!category || q.category === category) &&
             !excludeQuestions.includes(q.text)
         );
-        const combined = [...filtered, ...localFallback];
+        const combined = [...allQuestions, ...localFallback];
         return shuffleArray(combined).slice(0, count);
       }
 
-      return shuffleArray(filtered).slice(0, count);
+      return allQuestions;
     } catch (error) {
       console.error('Error fetching questions:', error);
       const localFallback = PREDEFINED_QUESTIONS.filter(
