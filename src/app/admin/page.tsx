@@ -21,10 +21,11 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function fetchStats() {
-      const [leaderboard, leads, questions] = await Promise.all([
-        supabase.from('leaderboard').select('display_name, score, created_at'),
+      const [leaderboard, leads, questions, leaderboardCount] = await Promise.all([
+        supabase.from('leaderboard').select('display_name, score, created_at').order('created_at', { ascending: false }).limit(10),
         supabase.from('leads').select('id', { count: 'exact', head: true }),
-        supabase.from('questions').select('category'),
+        supabase.from('questions').select('category', { count: 'exact' }),
+        supabase.from('leaderboard').select('id', { count: 'exact', head: true }),
       ]);
 
       const entries = leaderboard.data || [];
@@ -33,19 +34,15 @@ export default function AdminDashboard() {
       const categories = new Set((questions.data || []).map((q) => q.category));
 
       setStats({
-        totalGames: entries.length,
+        totalGames: leaderboardCount.count || 0,
         uniquePlayers: uniqueNames.size,
         totalLeads: leads.count || 0,
-        totalQuestions: (questions.data || []).length,
+        totalQuestions: questions.count || 0,
         avgScore: entries.length > 0 ? Math.round(totalScore / entries.length) : 0,
         categories: categories.size,
       });
 
-      setRecentGames(
-        entries
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 10)
-      );
+      setRecentGames(entries);
       setLoading(false);
     }
 
