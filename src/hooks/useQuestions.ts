@@ -54,13 +54,14 @@ export function useQuestions() {
 
       if (error) throw error;
 
-      return (data || []).map((q: { id: string; text: string; options: string[]; correct_answer: string; difficulty: number; category: string }) => ({
+      return (data || []).map((q: { id: string; text: string; options: string[]; correct_answer: string; difficulty: number; category: string; explanation?: string }) => ({
         id: q.id,
         text: q.text,
         options: q.options,
         correctAnswer: q.correct_answer,
         difficulty: q.difficulty,
         category: q.category,
+        ...(q.explanation ? { explanation: q.explanation } : {}),
       })) as Question[];
     } catch (error) {
       console.error('Error fetching questions:', error);

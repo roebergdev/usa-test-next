@@ -50,7 +50,7 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('questions')
-    .select('id, text, options, correct_answer, category, difficulty');
+    .select('id, text, options, correct_answer, category, difficulty, explanation');
 
   if (error) {
     console.error('[api/daily-questions] Failed to fetch questions:', error.message);
@@ -69,6 +69,7 @@ export async function GET() {
     correctAnswer: row.correct_answer,
     category: row.category,
     difficulty: row.difficulty,
+    ...(row.explanation ? { explanation: row.explanation } : {}),
   }));
 
   // Shuffle the full pool once with the seeded RNG so fallback picks are also deterministic

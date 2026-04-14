@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
-import { Plus, Pencil, Trash2, Search, Upload, X, Save, ChevronLeft, ChevronRight, FileUp, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Upload, X, Save, ChevronLeft, ChevronRight, FileUp, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react';
 
 interface DBQuestion {
   id: string;
@@ -12,6 +12,7 @@ interface DBQuestion {
   category: string;
   difficulty: number;
   created_at: string;
+  explanation?: string;
 }
 
 const CATEGORIES = [
@@ -49,6 +50,15 @@ export default function QuestionsAdmin() {
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState('');
 
+  // Factoid generation state
+  const [generatingFactoids, setGeneratingFactoids] = useState(false);
+  const [factoidProgress, setFactoidProgress] = useState<{
+    processed: number;
+    remaining: number;
+    skipped: number;
+    done: boolean;
+  } | null>(null);
+
   // CSV upload state
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [csvRows, setCsvRows] = useState<Array<{
@@ -62,7 +72,7 @@ export default function QuestionsAdmin() {
     setLoading(true);
     let query = supabase
       .from('questions')
-      .select('*', { count: 'exact' })
+      .select('id, text, options, correct_answer, category, difficulty, created_at, explanation', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE - 1);
 
@@ -174,6 +184,39 @@ export default function QuestionsAdmin() {
     }
   };
 
+  const handleGenerateFactoids = async () => {
+    if (!confirm('Generate factoids for all questions missing explanations? This may take 15–20 minutes and will run in the background.')) return;
+    setGeneratingFactoids(true);
+    setFactoidProgress({ processed: 0, remaining: 0, skipped: 0, done: false });
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    };
+
+    let totalProcessed = 0;
+    let totalSkipped = 0;
+
+    try {
+      while (true) {
+        const res = await fetch('/api/generate-factoids', { method: 'POST', headers });
+        if (!res.ok) break;
+        const data = await res.json();
+        totalProcessed += data.processed;
+        totalSkipped += data.skipped;
+        setFactoidProgress({ processed: totalProcessed, remaining: data.remaining, skipped: totalSkipped, done: data.done });
+        if (data.done) break;
+        await new Promise((r) => setTimeout(r, 500));
+      }
+    } catch (err) {
+      console.error('Factoid generation error:', err);
+    } finally {
+      setGeneratingFactoids(false);
+      fetchQuestions();
+    }
+  };
+
   const parseCSV = (text: string) => {
     const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
     if (lines.length === 0) {
@@ -281,6 +324,14 @@ export default function QuestionsAdmin() {
         </div>
         <div className="flex gap-3">
           <button
+            onClick={handleGenerateFactoids}
+            disabled={generatingFactoids}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+          >
+            <Sparkles className="w-4 h-4" />
+            {generatingFactoids ? 'Generating...' : 'Generate Factoids'}
+          </button>
+          <button
             onClick={handleSeed}
             disabled={seeding}
             className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
@@ -308,6 +359,37 @@ export default function QuestionsAdmin() {
       {seedResult && (
         <div className="mb-4 bg-blue-500/10 border border-blue-500/20 text-blue-300 px-4 py-3 rounded-lg text-sm">
           {seedResult}
+        </div>
+      )}
+
+      {factoidProgress && (
+        <div className={`mb-4 px-4 py-3 rounded-lg border text-sm ${
+          factoidProgress.done
+            ? 'bg-green-500/10 border-green-500/20 text-green-300'
+            : 'bg-purple-500/10 border-purple-500/20 text-purple-300'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <span>
+              {factoidProgress.done
+                ? `Done! Generated ${factoidProgress.processed.toLocaleString()} factoids.`
+                : `Generating factoids… ${factoidProgress.processed.toLocaleString()} done, ${factoidProgress.remaining.toLocaleString()} remaining`}
+            </span>
+            {factoidProgress.skipped > 0 && (
+              <span className="text-amber-400 text-xs">{factoidProgress.skipped} skipped</span>
+            )}
+          </div>
+          {!factoidProgress.done && (
+            <div className="w-full bg-gray-700 rounded-full h-1.5">
+              <div
+                className="bg-purple-500 h-1.5 rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.round(
+                    (factoidProgress.processed / (factoidProgress.processed + factoidProgress.remaining)) * 100
+                  )}%`,
+                }}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -361,6 +443,7 @@ export default function QuestionsAdmin() {
                 <th className="px-6 py-3 w-28">Category</th>
                 <th className="px-6 py-3 w-20 text-center">Diff</th>
                 <th className="px-6 py-3 w-28">Answer</th>
+                <th className="px-6 py-3 w-16 text-center">💡</th>
                 <th className="px-6 py-3 w-20"></th>
               </tr>
             </thead>
@@ -379,6 +462,9 @@ export default function QuestionsAdmin() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-green-400 truncate max-w-[120px]">{q.correct_answer}</td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`inline-block w-2 h-2 rounded-full ${q.explanation ? 'bg-green-400' : 'bg-gray-600'}`} />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
                       <button onClick={() => openEdit(q)} className="p-1.5 text-gray-400 hover:text-white transition-colors">
