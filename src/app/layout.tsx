@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     'Put your knowledge to the test - 5 questions daily, find out where you rank.',
   metadataBase: new URL('https://usatest.co'),
   openGraph: {
-    title: 'USA Test - How Smart Are You?',
+    title: 'Take the USA Test',
     description:
       'Put your knowledge to the test - 5 questions daily, find out where you rank.',
     url: 'https://usatest.co',
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'USA Test - How Smart Are You?',
+    title: 'Take the USA Test',
     description:
       'Put your knowledge to the test - 5 questions daily, find out where you rank.',
     images: ['https://usatest.co/og-image.png'],
