@@ -24,12 +24,21 @@ export const metadata: Metadata = {
     url: 'https://usatest.co',
     siteName: 'USA Test',
     type: 'website',
+    images: [
+      {
+        url: 'https://usatest.co/og-image.png',
+        width: 1360,
+        height: 768,
+        alt: 'USA Test – How Well Do You Know The USA?',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'USA Test - How Smart Are You?',
     description:
       'Put your knowledge to the test - 5 questions daily, find out where you rank.',
+    images: ['https://usatest.co/og-image.png'],
   },
 };
 
