@@ -210,7 +210,7 @@ function DailyResults({
   questions?: Question[];
   userAnswers?: string[];
 }) {
-  const [showCapture, setShowCapture] = useState(false);
+  const [showCapture, setShowCapture] = useState(!scoreSaved);
   const [showResults, setShowResults] = useState(false);
   const [copied, setCopied] = useState(false);
   const [form, setForm] = useState<CaptureFormData>({
@@ -360,9 +360,9 @@ function DailyResults({
         )}
       </div>
 
-      {/* ── Save button (above tiles) or success banner ── */}
-      <AnimatePresence mode="wait">
-        {scoreSaved ? (
+      {/* ── Success banner (shown after score is saved) ── */}
+      <AnimatePresence>
+        {scoreSaved && (
           <motion.div
             key="saved-banner"
             initial={{ opacity: 0, y: 8 }}
@@ -376,22 +376,6 @@ function DailyResults({
               <p className="text-sm font-black text-green-700">Score saved!</p>
               <p className="text-xs font-medium text-green-600">We&apos;ll remind you when tomorrow&apos;s test drops.</p>
             </div>
-          </motion.div>
-        ) : (
-          <motion.div key="save-btn" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <button
-              onClick={() => {
-                setShowCapture(true);
-                track('save_score_clicked', { quiz_mode: 'daily', score, question_count: totalQuestions, streak_count: streak });
-              }}
-              className="group relative w-full"
-            >
-              <div className="absolute -inset-0.5 bg-amac-red rounded-2xl blur opacity-20 group-hover:opacity-35 transition duration-500" />
-              <div className="relative w-full py-4 sm:py-5 bg-amac-red text-white rounded-xl font-black text-base sm:text-lg flex items-center justify-center gap-2.5 hover:bg-amac-red/90 transition-all shadow-xl shadow-amac-red/20 active:scale-[0.98]">
-                <Trophy className="w-5 h-5" />
-                {streak > 1 ? 'Save My Score & Keep My Streak' : 'Save Today\'s Score'}
-              </div>
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
