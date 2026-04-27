@@ -14,7 +14,7 @@ export function useLeaderboard(mode?: QuizMode) {
       .select('*')
       .order('score', { ascending: false })
       .order('time_seconds', { ascending: true, nullsFirst: false })
-      .limit(10);
+      .limit(200);
     if (mode) {
       query = query.eq('mode', mode);
     }
