@@ -135,16 +135,26 @@ export function useDailyGame() {
         date: getTodayString(),
       });
 
-      supabase
-        .from('daily_results')
-        .insert({
+      // Retry up to 3 times with exponential backoff (1s, 2s, 4s).
+      // localStorage is already written so the user can't replay regardless.
+      (async () => {
+        const payload = {
           quiz_date: getTodayString(),
           session_id: sessionIdRef.current,
           score: finalScore,
           total_questions: totalQuestions,
           time_seconds: seconds,
-        })
-        .then(() => {});
+        };
+        for (let attempt = 0; attempt < 3; attempt++) {
+          if (attempt > 0) {
+            await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
+          }
+          const { error } = await supabase.from('daily_results').insert(payload);
+          if (!error) return;
+          console.error(`[useDailyGame] daily_results insert attempt ${attempt + 1} failed:`, error.message);
+        }
+        console.error('[useDailyGame] daily_results insert failed after 3 attempts — score will not be leaderboard-eligible');
+      })();
     },
     [supabase]
   );
