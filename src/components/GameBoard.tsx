@@ -21,12 +21,6 @@ interface GameBoardProps {
   totalQuestions: number;
 }
 
-function getDifficultyLabel(difficulty: number): { label: string; cls: string } {
-  if (difficulty <= 2) return { label: 'Easy', cls: 'text-green-700 bg-green-50 border-green-200' };
-  if (difficulty <= 5) return { label: 'Medium', cls: 'text-amber-700 bg-amber-50 border-amber-200' };
-  return { label: 'Hard', cls: 'text-red-700 bg-red-50 border-red-200' };
-}
-
 /** Fisher-Yates shuffle using a seeded value so options don't re-shuffle on re-render. */
 function shuffleOptions(options: string[], seed: string): string[] {
   const arr = [...options];
@@ -56,7 +50,6 @@ export function GameBoard({
   const answered = selectedAnswer !== null;
   const timedOut = answered && selectedAnswer === '';
   const hasExplanation = Boolean(question.explanation);
-  const diff = getDifficultyLabel(question.difficulty);
 
   // Shuffle once per question (stable across re-renders, changes on new question)
   const shuffledOptions = useMemo(
@@ -112,9 +105,6 @@ export function GameBoard({
         className="bg-white border border-amac-blue/5 rounded-3xl p-6 sm:p-10 shadow-xl shadow-amac-blue/5"
       >
         <div className="flex items-center gap-2 mb-4 sm:mb-5 flex-wrap">
-          <span className={`text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${diff.cls}`}>
-            {diff.label}
-          </span>
           <span className="text-[9px] font-black uppercase tracking-[0.2em] text-amac-blue px-2.5 py-1 bg-amac-blue/8 border border-amac-blue/20 rounded-full">
             {question.category}
           </span>

@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { Question } from '@/lib/types';
 
-// Difficulty slots for the 10-question daily quiz
-const DAILY_DIFFICULTIES = [1, 2, 3, 4, 5, 5, 6, 7, 8, 9] as const;
+// Difficulty slots for the 10-question daily quiz — all easy
+const DAILY_DIFFICULTIES = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1] as const;
 
 function getTodayString(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
@@ -38,7 +38,7 @@ function fisherYates<T>(arr: T[], rng: () => number): T[] {
  *
  * Returns the same 10 questions for every user on a given calendar day.
  * Questions are pulled from the Supabase `questions` table and selected
- * deterministically using a date-seeded PRNG with the difficulty curve [1,2,3,4,5,5,6,7,8,9].
+ * deterministically using a date-seeded PRNG with all easy (difficulty 1) slots.
  *
  * If a difficulty slot has no questions, it falls back to any remaining
  * unselected questions from the full pool.
