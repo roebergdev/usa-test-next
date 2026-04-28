@@ -10,9 +10,6 @@ interface IdentityBody {
   lastInitial: string;
   phone: string;
   smsConsent: boolean;
-  score: number;
-  totalQuestions: number;
-  timeSeconds: number | null;
   streak: number;
 }
 
@@ -55,17 +52,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No session' }, { status: 401 });
   }
 
-  // ── Duplicate submission check: one claim per session per day ───────────────
-  const { data: existingResult } = await supabaseAdmin
+  // ── Fetch today's result for this session (server-authoritative score) ────────
+  // This row is written at quiz completion by the client-side hook.
+  // We use its score/time instead of trusting anything the client sends.
+  const { data: dailyResult } = await supabaseAdmin
     .from('daily_results')
-    .select('user_id')
+    .select('score, time_seconds, total_questions, user_id')
     .eq('session_id', sessionId)
     .eq('quiz_date', getTodayString())
     .maybeSingle();
 
-  if (existingResult?.user_id) {
+  if (!dailyResult) {
+    return NextResponse.json({ error: 'No completed quiz found for this session' }, { status: 400 });
+  }
+
+  if (dailyResult.user_id) {
     return NextResponse.json({ error: 'Score already saved for today' }, { status: 409 });
   }
+
+  const verifiedScore = dailyResult.score;
+  const verifiedTimeSeconds = dailyResult.time_seconds ?? null;
+  const verifiedTotalQuestions = dailyResult.total_questions;
 
   let body: IdentityBody;
   try {
@@ -74,7 +81,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
-  const { firstName, lastInitial, phone, smsConsent, score, totalQuestions, timeSeconds, streak } = body;
+  const { firstName, lastInitial, phone, smsConsent, streak } = body;
 
   // ── 1. Normalize phone ──────────────────────────────────────────────────────
   const digits = stripPhone(phone);
@@ -164,9 +171,9 @@ export async function POST(request: NextRequest) {
 
   const { error: lbError } = await supabaseAdmin.from('leaderboard').insert({
     display_name: resolvedDisplayName,
-    score,
+    score: verifiedScore,
     mode: 'daily',
-    time_seconds: timeSeconds ?? null,
+    time_seconds: verifiedTimeSeconds,
     state_code: stateCode,
   });
 
@@ -178,7 +185,7 @@ export async function POST(request: NextRequest) {
     name: resolvedDisplayName,
     phone: normalizedPhone,
     type: 'phone',
-    score,
+    score: verifiedScore,
     sms_consent: smsConsent,
   });
 
@@ -206,8 +213,8 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         phone: normalizedPhone,
         firstName: firstName.trim(),
-        score,
-        totalQuestions,
+        score: verifiedScore,
+        totalQuestions: verifiedTotalQuestions,
         streak,
       }),
     }).catch((err) => {

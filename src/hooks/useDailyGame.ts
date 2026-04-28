@@ -252,9 +252,6 @@ export function useDailyGame() {
         lastInitial,
         phone,
         smsConsent,
-        score,
-        totalQuestions: questionsRef.current.length,
-        timeSeconds: totalSeconds,
         streak: getStreak(),
       }),
     });
