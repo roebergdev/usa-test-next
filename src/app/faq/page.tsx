@@ -49,7 +49,7 @@ const FAQS = [
   {
     question: 'How does the countdown timer work?',
     answer:
-      'Each question has a 10-second countdown. The timer resets for every new question and visually counts down around the circle.',
+      'Each question has a 10-second countdown. The timer resets for every new question and visually counts down as a progress bar.',
   },
   {
     question: 'What happens if I run out of time on a question?',
