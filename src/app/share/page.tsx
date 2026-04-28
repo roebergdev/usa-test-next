@@ -69,7 +69,7 @@ export default async function SharePage({ searchParams }: Props) {
         <div className="space-y-2">
           <p className="text-lg font-black text-amac-dark">Think you can beat it?</p>
           <p className="text-sm text-neutral-500 font-medium">
-            A new 5-question test every day — history, civics, geography, and culture.
+            A new 10-question test every day — history, civics, geography, and culture.
           </p>
         </div>
 

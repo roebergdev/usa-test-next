@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { Question } from '@/lib/types';
 
-// Difficulty slots for the 5-question daily quiz (same curve as before)
-const DAILY_DIFFICULTIES = [1, 2, 4, 5, 7] as const;
+// Difficulty slots for the 10-question daily quiz
+const DAILY_DIFFICULTIES = [1, 2, 3, 4, 5, 5, 6, 7, 8, 9] as const;
 
 function getTodayString(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
@@ -36,9 +36,9 @@ function fisherYates<T>(arr: T[], rng: () => number): T[] {
 /**
  * GET /api/daily-questions
  *
- * Returns the same 5 questions for every user on a given calendar day.
+ * Returns the same 10 questions for every user on a given calendar day.
  * Questions are pulled from the Supabase `questions` table and selected
- * deterministically using a date-seeded PRNG with the difficulty curve [1,2,4,5,7].
+ * deterministically using a date-seeded PRNG with the difficulty curve [1,2,3,4,5,5,6,7,8,9].
  *
  * If a difficulty slot has no questions, it falls back to any remaining
  * unselected questions from the full pool.
@@ -88,9 +88,9 @@ export async function GET() {
   }
 
   // If any slots were empty, fill from remaining questions
-  if (selected.length < 5) {
+  if (selected.length < 10) {
     for (const q of shuffledAll) {
-      if (selected.length >= 5) break;
+      if (selected.length >= 10) break;
       if (!usedIds.has(q.id)) {
         selected.push(q);
         usedIds.add(q.id);
