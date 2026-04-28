@@ -5,7 +5,7 @@ const TERMS_SECTIONS = [
     title: 'Acceptance of These Terms',
     paragraphs: [
       'These Terms of Service govern your access to and use of USA Test. By using the site, you agree to these terms. If you do not agree, do not use the site.',
-      'These terms apply to the daily test, practice mode, leaderboard features, informational pages, and any related communications or future features offered through the site.',
+      'These terms apply to the daily test, study mode, leaderboard features, informational pages, and any related communications or future features offered through the site.',
     ],
   },
   {
@@ -123,7 +123,7 @@ export default function TermsPage() {
     <LegalPage
       eyebrow="Terms"
       title="Terms of Service"
-      intro="These Terms of Service are adapted for USA Test based on the kinds of product terms commonly used by consumer learning platforms, but they have been rewritten to fit this site’s actual daily test, practice, leaderboard, and contact-capture flows."
+      intro="These Terms of Service are adapted for USA Test based on the kinds of product terms commonly used by consumer learning platforms, but they have been rewritten to fit this site’s actual daily test, study, leaderboard, and contact-capture flows."
       effectiveDate="April 8, 2026"
       sections={TERMS_SECTIONS}
     />

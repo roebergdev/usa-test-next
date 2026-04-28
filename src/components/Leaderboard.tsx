@@ -27,7 +27,7 @@ export function Leaderboard({ mode }: LeaderboardProps) {
           </h3>
         </div>
         <div className="px-3 py-1 bg-amac-gray rounded-full text-[8px] sm:text-[10px] text-neutral-400 font-bold uppercase tracking-widest">
-          {mode === 'daily' ? 'Daily' : mode === 'practice' ? 'Practice' : 'Global'}
+          {mode === 'daily' ? 'Daily' : mode === 'practice' ? 'Study' : 'Global'}
         </div>
       </div>
 

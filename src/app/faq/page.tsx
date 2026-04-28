@@ -4,7 +4,7 @@ const FAQS = [
   {
     question: 'What is USA Test?',
     answer:
-      'USA Test is a daily U.S. knowledge challenge with a fresh ten-question test each day, plus a practice mode for extra reps across specific categories.',
+      'USA Test is a daily U.S. knowledge challenge with a fresh ten-question test each day, plus a study mode for extra reps across specific categories.',
   },
   {
     question: 'How does the daily test work?',
@@ -14,7 +14,7 @@ const FAQS = [
   {
     question: 'How many questions are in the daily test?',
     answer:
-      'The daily test has 10 questions. Practice mode also serves a 10-question batch.',
+      'The daily test has 10 questions. Study mode also serves a 10-question batch.',
   },
   {
     question: 'When does a new daily test become available?',
@@ -24,20 +24,20 @@ const FAQS = [
   {
     question: 'Can I take the daily test more than once per day?',
     answer:
-      'No. The daily test is intended to be one attempt per day on a given browser/device session, while practice mode is available whenever you want more questions.',
+      'No. The daily test is intended to be one attempt per day on a given browser/device session, while study mode is available whenever you want more questions.',
   },
   {
-    question: 'What is practice mode?',
+    question: 'What is study mode?',
     answer:
-      'Practice mode is the untethered version of the site. It lets you keep playing outside the daily test and focus on building familiarity with the question bank.',
+      'Study mode is the untethered version of the site. It lets you keep playing outside the daily test and focus on building familiarity with the question bank.',
   },
   {
-    question: 'Can I choose a topic in practice mode?',
+    question: 'Can I choose a topic in study mode?',
     answer:
       'Yes. You can start practice from the category pills in the home tile or from the footer category tabs to load a fresh batch from that category.',
   },
   {
-    question: 'What categories are available in practice mode?',
+    question: 'What categories are available in study mode?',
     answer:
       'Current categories include Civics, Geography, Landmarks, Military, U.S. History, American Culture, National Parks, U.S. Sports, and Famous Americans.',
   },
@@ -59,7 +59,7 @@ const FAQS = [
   {
     question: 'How does the leaderboard work?',
     answer:
-      'After completing the daily test, you can submit your information to claim a leaderboard spot. Practice mode scores can also be saved separately.',
+      'After completing the daily test, you can submit your information to claim a leaderboard spot. Study mode scores can also be saved separately.',
   },
   {
     question: 'How are ties broken on the daily leaderboard?',
@@ -148,7 +148,7 @@ export default function FaqPage() {
               </h1>
               <p className="max-w-2xl text-sm sm:text-base text-neutral-600 font-medium leading-relaxed">
                 These answers reflect how the site works right now, including the daily
-                test, category-based practice mode, timers, leaderboards, and contact capture.
+                test, category-based study mode, timers, leaderboards, and contact capture.
               </p>
             </div>
 

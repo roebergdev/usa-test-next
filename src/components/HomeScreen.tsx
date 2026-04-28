@@ -380,7 +380,7 @@ function PracticeRow({ onPlayPractice }: { onPlayPractice: () => void }) {
           </div>
           <div>
             <div className="font-black text-base sm:text-lg text-amac-dark group-hover:text-amac-blue transition-colors tracking-tight">
-              Practice Mode
+              Study Mode
             </div>
           </div>
         </div>

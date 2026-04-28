@@ -442,7 +442,7 @@ function DailyResults({
             className="flex-1 py-3.5 bg-amac-blue/10 text-amac-blue rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-amac-blue/20 transition-all active:scale-[0.98] border border-amac-blue/10"
           >
             <span>🧠</span>
-            Practice More
+            Study More
           </button>
         )}
         <button

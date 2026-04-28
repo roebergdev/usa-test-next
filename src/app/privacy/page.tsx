@@ -4,8 +4,8 @@ const PRIVACY_SECTIONS = [
   {
     title: 'Overview',
     paragraphs: [
-      'This Privacy Policy explains how USA Test collects, uses, stores, and discloses information when you visit the site, take a daily test, use practice mode, submit contact information, or interact with the leaderboard.',
-      'This policy is written for the site as it operates today. USA Test is a lightweight learning product built around a daily test, category-based practice mode, local browser storage, session cookies, and optional post-test contact capture.',
+      'This Privacy Policy explains how USA Test collects, uses, stores, and discloses information when you visit the site, take a daily test, use study mode, submit contact information, or interact with the leaderboard.',
+      'This policy is written for the site as it operates today. USA Test is a lightweight learning product built around a daily test, category-based study mode, local browser storage, session cookies, and optional post-test contact capture.',
     ],
   },
   {
@@ -20,7 +20,7 @@ const PRIVACY_SECTIONS = [
   {
     title: 'How We Use Information',
     bullets: [
-      'To operate the daily test, practice mode, timer flows, and answer review experience.',
+      'To operate the daily test, study mode, timer flows, and answer review experience.',
       'To save or restore limited browser-side progress, such as daily test completion status, streak information, and saved display name.',
       'To operate leaderboards, including ranking, tie-breaking based on completion time, and display of submitted names and scores.',
       'To create or maintain browser sessions and link a session to a leaderboard submission when a user chooses to provide identifying information.',
