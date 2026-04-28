@@ -28,6 +28,12 @@ export interface NotifyPayload {
  *   TWILIO_AUTH_TOKEN=...
  */
 export async function POST(req: NextRequest) {
+  // Only allow calls from within the app (via /api/identity).
+  const secret = process.env.INTERNAL_API_SECRET;
+  if (!secret || req.headers.get('x-internal-secret') !== secret) {
+    return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 });
+  }
+
   let body: NotifyPayload;
 
   try {

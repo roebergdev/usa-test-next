@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { stripPhone, toE164, buildDisplayName } from '@/lib/capture';
 import { getTodayString } from '@/lib/daily';
+import { rateLimit } from '@/lib/rateLimit';
 import { SESSION_COOKIE } from '../../../../middleware';
 
 interface IdentityBody {
@@ -43,9 +44,27 @@ interface IdentityBody {
  *   no duplicate user is created.
  */
 export async function POST(request: NextRequest) {
+  // ── Rate limit: 10 submissions per IP per hour ──────────────────────────────
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  if (!rateLimit(`identity:${ip}`, 10, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const sessionId = request.cookies.get(SESSION_COOKIE)?.value;
   if (!sessionId) {
     return NextResponse.json({ error: 'No session' }, { status: 401 });
+  }
+
+  // ── Duplicate submission check: one claim per session per day ───────────────
+  const { data: existingResult } = await supabaseAdmin
+    .from('daily_results')
+    .select('user_id')
+    .eq('session_id', sessionId)
+    .eq('quiz_date', getTodayString())
+    .maybeSingle();
+
+  if (existingResult?.user_id) {
+    return NextResponse.json({ error: 'Score already saved for today' }, { status: 409 });
   }
 
   let body: IdentityBody;
@@ -180,7 +199,10 @@ export async function POST(request: NextRequest) {
 
     fetch(`${baseUrl}/api/notify`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-secret': process.env.INTERNAL_API_SECRET ?? '',
+      },
       body: JSON.stringify({
         phone: normalizedPhone,
         firstName: firstName.trim(),
