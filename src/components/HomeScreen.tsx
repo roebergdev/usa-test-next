@@ -123,7 +123,7 @@ function DailyQuizHero({
             </span>
           </h2>
           <p className="text-sm sm:text-lg font-black tracking-tight text-amac-dark/65">
-            Take the 5-question Daily USA Test
+            Take the 10-question Daily USA Test
           </p>
         </div>
 
