@@ -10,7 +10,13 @@ function getTodayString(): string {
 }
 
 function dateStringToSeed(dateStr: string): number {
-  return parseInt(dateStr.replace(/-/g, ''), 10);
+  const secret = process.env.DAILY_SEED_SECRET ?? '';
+  const combined = dateStr + secret;
+  let hash = 0;
+  for (let i = 0; i < combined.length; i++) {
+    hash = (Math.imul(31, hash) + combined.charCodeAt(i)) | 0;
+  }
+  return hash >>> 0;
 }
 
 // Mulberry32 seeded PRNG — deterministic, fast, good distribution
