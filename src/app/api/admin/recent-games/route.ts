@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     return {
       display_name: name,
       score: e.score,
-      total_questions: e.total_questions ?? 10,
+      total_questions: e.total_questions ?? 7,
       created_at: e.created_at,
       source: e.user_id ? 'leaderboard' : 'daily',
     };

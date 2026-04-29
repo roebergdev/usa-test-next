@@ -4,17 +4,17 @@ const FAQS = [
   {
     question: 'What is USA Test?',
     answer:
-      'USA Test is a daily U.S. knowledge challenge with a fresh ten-question test each day, plus a study mode for extra reps across specific categories.',
+      'USA Test is a daily U.S. knowledge challenge with a fresh seven-question test each day, plus a study mode for extra reps across specific categories.',
   },
   {
     question: 'How does the daily test work?',
     answer:
-      'Each day you get one timed ten-question test. Everyone receives the same daily set for that day, and your result can be saved to the leaderboard after you finish.',
+      'Each day you get one timed seven-question test. Everyone receives the same daily set for that day, and your result can be saved to the leaderboard after you finish.',
   },
   {
     question: 'How many questions are in the daily test?',
     answer:
-      'The daily test has 10 questions. Study mode also serves a 10-question batch.',
+      'The daily test has 7 questions. Study mode serves a 10-question batch.',
   },
   {
     question: 'When does a new daily test become available?',

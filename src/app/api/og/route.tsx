@@ -6,7 +6,7 @@ export const runtime = 'edge';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const score = parseInt(searchParams.get('score') ?? '0');
-  const total = parseInt(searchParams.get('total') ?? '10');
+  const total = parseInt(searchParams.get('total') ?? '7');
   const streak = parseInt(searchParams.get('streak') ?? '0');
   const name = searchParams.get('name') ?? '';
 
