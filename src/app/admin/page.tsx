@@ -227,8 +227,8 @@ export default function AdminDashboard() {
                     })}
                   </p>
                 </div>
-                <span className="text-lg font-bold text-amac-blue">
-                  {game.score}<span className="text-neutral-500 text-sm font-medium">/{game.total_questions}</span>
+                <span className="text-lg font-bold text-green-400">
+                  {game.score}<span className="text-gray-500 text-sm font-medium">/{game.total_questions}</span>
                 </span>
               </div>
             ))
