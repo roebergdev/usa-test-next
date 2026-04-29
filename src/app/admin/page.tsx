@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
-import { Gamepad2, Users, HelpCircle, Mail, TrendingUp, Layers } from 'lucide-react';
+import { Gamepad2, Users, HelpCircle, Mail, TrendingUp, Layers, Eye, MousePointerClick } from 'lucide-react';
 
 interface Stats {
   totalGames: number;
@@ -13,14 +13,26 @@ interface Stats {
   categories: number;
 }
 
+interface AnalyticsData {
+  period: { from: string; to: string };
+  totalPageViews: number;
+  totalVisitors: number;
+  todayPageViews: number;
+  todayVisitors: number;
+  dailySeries: { key: string; total: number; unique: number }[];
+  topPages: { key: string; total: number }[];
+}
+
 export default function AdminDashboard() {
   const { supabase } = useSupabaseContext();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [recentGames, setRecentGames] = useState<{ display_name: string; score: number; created_at: string; source: 'leaderboard' | 'daily' }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchStats() {
+    async function fetchAll() {
       const [leaderboard, dailyResults, leads, questions, leaderboardCount, dailyCount] = await Promise.all([
         supabase.from('leaderboard').select('display_name, score, created_at').order('created_at', { ascending: false }).limit(20),
         supabase.from('daily_results').select('score, created_at').order('created_at', { ascending: false }).limit(20),
@@ -53,9 +65,23 @@ export default function AdminDashboard() {
 
       setRecentGames(combined);
       setLoading(false);
+
+      // Fetch Vercel analytics with the current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        const res = await fetch('/api/admin/analytics', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.ok) {
+          setAnalytics(await res.json());
+        } else {
+          const { error } = await res.json().catch(() => ({ error: 'Failed to load' }));
+          setAnalyticsError(error);
+        }
+      }
     }
 
-    fetchStats();
+    fetchAll();
   }, [supabase]);
 
   if (loading) {
@@ -75,11 +101,14 @@ export default function AdminDashboard() {
     { label: 'Categories', value: stats?.categories ?? 0, icon: Layers, color: 'text-cyan-400' },
   ];
 
-  return (
-    <div>
-      <h1 className="text-2xl font-bold text-white mb-8">Dashboard</h1>
+  const maxVisitors = Math.max(...(analytics?.dailySeries.map((d) => d.unique) ?? [1]), 1);
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+  return (
+    <div className="space-y-8">
+      <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+
+      {/* ── App stats ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {statCards.map((card) => (
           <div key={card.label} className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <div className="flex items-center justify-between mb-4">
@@ -91,6 +120,87 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      {/* ── Vercel Analytics ── */}
+      <div>
+        <h2 className="text-lg font-semibold text-white mb-4">
+          Traffic{' '}
+          {analytics && (
+            <span className="text-sm font-normal text-gray-400">
+              {analytics.period.from} → {analytics.period.to}
+            </span>
+          )}
+        </h2>
+
+        {analyticsError ? (
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 text-gray-400 text-sm">
+            {analyticsError === 'Vercel analytics not configured'
+              ? 'Add VERCEL_API_TOKEN and VERCEL_PROJECT_ID to your environment variables to enable traffic analytics.'
+              : `Could not load analytics: ${analyticsError}`}
+          </div>
+        ) : analytics ? (
+          <div className="space-y-4">
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: 'Visitors (7d)', value: analytics.totalVisitors, icon: Users, color: 'text-blue-400' },
+                { label: 'Page Views (7d)', value: analytics.totalPageViews, icon: Eye, color: 'text-green-400' },
+                { label: "Today's Visitors", value: analytics.todayVisitors, icon: Users, color: 'text-purple-400' },
+                { label: "Today's Views", value: analytics.todayPageViews, icon: MousePointerClick, color: 'text-yellow-400' },
+              ].map((card) => (
+                <div key={card.label} className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-gray-400">{card.label}</span>
+                    <card.icon className={`w-4 h-4 ${card.color}`} />
+                  </div>
+                  <p className="text-2xl font-bold text-white">{card.value.toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* 7-day visitor chart */}
+            <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+              <h3 className="text-sm font-semibold text-gray-300 mb-4">Daily Visitors (last 7 days)</h3>
+              <div className="flex items-end gap-2 h-28">
+                {analytics.dailySeries.map((day) => (
+                  <div key={day.key} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-[10px] text-gray-500">{day.unique}</span>
+                    <div
+                      className="w-full bg-amac-blue rounded-t"
+                      style={{ height: `${Math.max(4, (day.unique / maxVisitors) * 96)}px` }}
+                    />
+                    <span className="text-[9px] text-gray-500">
+                      {new Date(day.key + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top pages */}
+            {analytics.topPages.length > 0 && (
+              <div className="bg-gray-800 rounded-xl border border-gray-700">
+                <div className="p-5 border-b border-gray-700">
+                  <h3 className="text-sm font-semibold text-gray-300">Top Pages (7d)</h3>
+                </div>
+                <div className="divide-y divide-gray-700">
+                  {analytics.topPages.map((page) => (
+                    <div key={page.key} className="px-5 py-3 flex items-center justify-between">
+                      <span className="text-sm text-gray-300 font-mono">{page.key || '/'}</span>
+                      <span className="text-sm font-bold text-white">{page.total.toLocaleString()} views</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amac-blue" />
+          </div>
+        )}
+      </div>
+
+      {/* ── Recent Games ── */}
       <div className="bg-gray-800 rounded-xl border border-gray-700">
         <div className="p-6 border-b border-gray-700">
           <h2 className="text-lg font-semibold text-white">Recent Games</h2>

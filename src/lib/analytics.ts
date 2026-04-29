@@ -67,7 +67,7 @@ export function track(event: AnalyticsEvent, properties?: AnalyticsProperties): 
   // Pageviews are tracked automatically via <Analytics /> in layout.tsx.
   // Custom events are fired here so product funnels appear in the dashboard.
   import('@vercel/analytics').then(({ track: vaTrack }) => {
-    vaTrack(event, payload);
+    vaTrack(event, payload as Record<string, string | number | boolean | null>);
   }).catch(() => {});
 
   // ── Zoho PageSense ────────────────────────────────────────────────────────
