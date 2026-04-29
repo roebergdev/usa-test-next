@@ -28,14 +28,14 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
-  const [recentGames, setRecentGames] = useState<{ display_name: string; score: number; created_at: string; source: 'leaderboard' | 'daily' }[]>([]);
+  const [recentGames, setRecentGames] = useState<{ display_name: string; score: number; total_questions: number; created_at: string; source: 'leaderboard' | 'daily' }[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchAll() {
       const [leaderboard, dailyResults, leads, questions, leaderboardCount, dailyCount] = await Promise.all([
         supabase.from('leaderboard').select('display_name, score, created_at').order('created_at', { ascending: false }).limit(20),
-        supabase.from('daily_results').select('score, created_at').order('created_at', { ascending: false }).limit(20),
+        supabase.from('daily_results').select('score, total_questions, created_at').order('created_at', { ascending: false }).limit(20),
         supabase.from('leads').select('id', { count: 'exact', head: true }),
         supabase.from('questions').select('category', { count: 'exact' }),
         supabase.from('leaderboard').select('id', { count: 'exact', head: true }),
@@ -57,8 +57,8 @@ export default function AdminDashboard() {
       });
 
       const combined = [
-        ...entries.map((e) => ({ display_name: e.display_name, score: e.score, created_at: e.created_at, source: 'leaderboard' as const })),
-        ...(dailyResults.data || []).map((e) => ({ display_name: 'Daily Quiz', score: e.score, created_at: e.created_at, source: 'daily' as const })),
+        ...entries.map((e) => ({ display_name: e.display_name, score: e.score, total_questions: 10, created_at: e.created_at, source: 'leaderboard' as const })),
+        ...(dailyResults.data || []).map((e) => ({ display_name: 'Daily Quiz', score: e.score, total_questions: e.total_questions ?? 10, created_at: e.created_at, source: 'daily' as const })),
       ]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 10);
@@ -227,7 +227,9 @@ export default function AdminDashboard() {
                     })}
                   </p>
                 </div>
-                <span className="text-lg font-bold text-amac-blue">{game.score.toLocaleString()}</span>
+                <span className="text-lg font-bold text-amac-blue">
+                  {game.score}<span className="text-neutral-500 text-sm font-medium">/{game.total_questions}</span>
+                </span>
               </div>
             ))
           )}
