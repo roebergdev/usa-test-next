@@ -70,10 +70,4 @@ export function track(event: AnalyticsEvent, properties?: AnalyticsProperties): 
     vaTrack(event, payload as Record<string, string | number | boolean | null>);
   }).catch(() => {});
 
-  // ── Zoho PageSense ────────────────────────────────────────────────────────
-  // PageSense script is loaded via <Script> in layout.tsx.
-  // pagesense is the global pushed by their snippet.
-  if (typeof window !== 'undefined' && Array.isArray((window as unknown as Record<string, unknown>).pagesense)) {
-    (window as unknown as Record<string, unknown[]>).pagesense.push(['trackEvent', event, payload]);
-  }
 }

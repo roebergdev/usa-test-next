@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Nunito } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
-import Script from 'next/script';
 import { SupabaseProvider } from '@/components/providers/SupabaseProvider';
 import './globals.css';
 
@@ -54,10 +53,6 @@ export default function RootLayout({
       <body className="font-sans">
         <SupabaseProvider>{children}</SupabaseProvider>
         <Analytics />
-        <Script
-          src="https://cdn.pagesense.io/js/discoverrealtime/e0a70d750fba49c48abdc1602ecb541c.js"
-          strategy="afterInteractive"
-        />
       </body>
     </html>
   );
