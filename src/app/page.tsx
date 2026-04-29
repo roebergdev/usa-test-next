@@ -95,6 +95,7 @@ function DailyGameApp({
           totalQuestions={game.totalQuestions}
           onSaveDailyContact={game.saveDailyContact}
           scoreSaved={game.scoreSaved}
+          dbSyncState={game.dbSyncState}
           onGoToLobby={onBack}
           onPlayPractice={onPlayPractice}
           streak={game.streak}

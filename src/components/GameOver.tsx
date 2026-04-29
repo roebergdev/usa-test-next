@@ -47,6 +47,7 @@ interface GameOverProps {
     smsConsent: boolean
   ) => Promise<void>;
   scoreSaved: boolean;
+  dbSyncState?: 'idle' | 'pending' | 'synced' | 'failed';
   streak?: number;
   /** Total seconds taken across all questions — used for tiebreaking display */
   totalSeconds?: number | null;
@@ -192,6 +193,7 @@ function DailyResults({
   totalQuestions,
   streak,
   scoreSaved,
+  dbSyncState,
   totalSeconds,
   onSaveDailyContact,
   onPlayPractice,
@@ -203,6 +205,7 @@ function DailyResults({
   totalQuestions: number;
   streak: number;
   scoreSaved: boolean;
+  dbSyncState?: 'idle' | 'pending' | 'synced' | 'failed';
   totalSeconds?: number | null;
   onSaveDailyContact?: (f: string, l: string, p: string, c: boolean) => Promise<void>;
   onPlayPractice?: () => void;
@@ -222,6 +225,7 @@ function DailyResults({
   const [errors, setErrors] = useState<CaptureErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Read prior play history from localStorage on first render (client-only).
   // TODO: Once users are authenticated by phone, replace with server-side
@@ -314,12 +318,18 @@ function DailyResults({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
+    setSaveError(null);
     const errs = validateCapture(form);
     setErrors(errs);
     if (hasErrors(errs) || saving) return;
     setSaving(true);
-    await onSaveDailyContact?.(form.firstName, form.lastInitial, form.phone, form.smsConsent);
-    setSaving(false);
+    try {
+      await onSaveDailyContact?.(form.firstName, form.lastInitial, form.phone, form.smsConsent);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -614,13 +624,17 @@ function DailyResults({
                   </AnimatePresence>
                 </div>
 
+                {saveError && (
+                  <p className="text-sm text-amac-red font-bold text-center">{saveError}</p>
+                )}
+
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={saving || dbSyncState === 'pending'}
                   className="w-full py-4 bg-amac-red text-white rounded-xl font-black text-base flex items-center justify-center gap-2 hover:bg-amac-red/90 transition-all disabled:opacity-50 shadow-lg shadow-amac-red/20 active:scale-[0.98]"
                 >
-                  {saving ? 'Saving...' : 'Save My Score'}
-                  {!saving && <ChevronRight className="w-4 h-4" />}
+                  {saving ? 'Saving...' : dbSyncState === 'pending' ? 'Getting ready...' : 'Save My Score'}
+                  {!saving && dbSyncState !== 'pending' && <ChevronRight className="w-4 h-4" />}
                 </button>
               </form>
 
@@ -885,6 +899,7 @@ export function GameOver({
   onPlayPractice,
   onSaveDailyContact,
   scoreSaved,
+  dbSyncState = 'synced',
   streak = 0,
   totalSeconds,
   questions,
@@ -898,6 +913,7 @@ export function GameOver({
         streak={streak}
         totalSeconds={totalSeconds}
         scoreSaved={scoreSaved}
+        dbSyncState={dbSyncState}
         onSaveDailyContact={onSaveDailyContact}
         onPlayPractice={onPlayPractice}
         onGoToLobby={onGoToLobby}

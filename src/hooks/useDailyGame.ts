@@ -26,6 +26,7 @@ export function useDailyGame() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [scoreSaved, setScoreSaved] = useState(false);
+  const [dbSyncState, setDbSyncState] = useState<'idle' | 'pending' | 'synced' | 'failed'>('idle');
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
@@ -137,6 +138,8 @@ export function useDailyGame() {
 
       // Retry up to 3 times with exponential backoff (1s, 2s, 4s).
       // localStorage is already written so the user can't replay regardless.
+      // dbSyncState gates the capture form submit so we never race /api/identity.
+      setDbSyncState('pending');
       (async () => {
         const payload = {
           quiz_date: getTodayString(),
@@ -150,10 +153,14 @@ export function useDailyGame() {
             await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
           }
           const { error } = await supabase.from('daily_results').insert(payload);
-          if (!error) return;
+          if (!error) {
+            setDbSyncState('synced');
+            return;
+          }
           console.error(`[useDailyGame] daily_results insert attempt ${attempt + 1} failed:`, error.message);
         }
         console.error('[useDailyGame] daily_results insert failed after 3 attempts — score will not be leaderboard-eligible');
+        setDbSyncState('failed');
       })();
     },
     [supabase]
@@ -267,9 +274,9 @@ export function useDailyGame() {
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      console.error('Failed to save identity:', text);
-      return;
+      const { error } = await res.json().catch(() => ({ error: 'Something went wrong. Please try again.' }));
+      console.error('Failed to save identity:', error);
+      throw new Error(error ?? 'Something went wrong. Please try again.');
     }
 
     setScoreSaved(true);
@@ -293,6 +300,7 @@ export function useDailyGame() {
     currentQuestionIndex,
     score,
     scoreSaved,
+    dbSyncState,
     selectedAnswer,
     isCorrect,
     timeLeft,
