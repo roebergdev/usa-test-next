@@ -181,13 +181,16 @@ export async function POST(request: NextRequest) {
   // Stored separately from users for CRM/marketing use. Not deduplicated here
   // since users is the canonical identity store.
   // Saved before checking lbError so a leaderboard failure never silently drops a lead.
-  await supabaseAdmin.from('leads').insert({
+  const { error: leadsError } = await supabaseAdmin.from('leads').insert({
     name: resolvedDisplayName,
     phone: normalizedPhone,
     type: 'phone',
     score: verifiedScore,
     sms_consent: smsConsent,
   });
+  if (leadsError) {
+    console.error('[api/identity] Failed to insert lead:', leadsError.message);
+  }
 
   if (lbError) {
     console.error('[api/identity] Failed to insert leaderboard entry:', lbError.message);

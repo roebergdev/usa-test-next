@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSupabaseContext } from '@/components/providers/SupabaseProvider';
-import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, RefreshCw } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -63,14 +63,24 @@ export default function LeadsAdmin() {
           <h1 className="text-2xl font-bold text-white">Leads</h1>
           <p className="text-gray-400 text-sm mt-1">{totalCount} total leads</p>
         </div>
-        <button
-          onClick={exportCSV}
-          disabled={leads.length === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
-        >
-          <Download className="w-4 h-4" />
-          Export CSV
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => fetchLeads()}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={exportCSV}
+            disabled={leads.length === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
