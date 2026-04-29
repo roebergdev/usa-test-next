@@ -21,9 +21,8 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function fetchAll() {
-      const [leaderboard, dailyResults, leads, questions, dailyCount] = await Promise.all([
+      const [leaderboard, leads, questions, dailyCount] = await Promise.all([
         supabase.from('leaderboard').select('display_name, score').order('created_at', { ascending: false }).limit(50),
-        supabase.from('daily_results').select('score, total_questions, created_at, user_id, users(first_name, last_initial)').order('created_at', { ascending: false }).limit(100),
         supabase.from('leads').select('id', { count: 'exact', head: true }),
         supabase.from('questions').select('category', { count: 'exact' }),
         supabase.from('daily_results').select('id', { count: 'exact', head: true }),
@@ -43,30 +42,18 @@ export default function AdminDashboard() {
         categories: categories.size,
       });
 
-      type DailyRow = {
-        score: number;
-        total_questions: number | null;
-        created_at: string;
-        user_id: string | null;
-        users: { first_name: string | null; last_initial: string | null }[] | { first_name: string | null; last_initial: string | null } | null;
-      };
-      const combined = ((dailyResults.data ?? []) as unknown as DailyRow[])
-        .map((e) => {
-          const u = Array.isArray(e.users) ? e.users[0] : e.users;
-          const name = u?.first_name
-            ? `${u.first_name} ${u.last_initial ?? ''}.`.trim()
-            : 'Daily Quiz';
-          return {
-            display_name: name,
-            score: e.score,
-            total_questions: e.total_questions ?? 10,
-            created_at: e.created_at,
-            source: (e.user_id ? 'leaderboard' : 'daily') as 'leaderboard' | 'daily',
-          };
-        })
-        .slice(0, 100);
-
-      setRecentGames(combined);
+      // Fetch recent games via server route so the join to `users` (RLS-blocked
+      // on the anon client) returns names.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        const res = await fetch('/api/admin/recent-games', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (res.ok) {
+          const { games } = await res.json();
+          setRecentGames(games);
+        }
+      }
       setLoading(false);
     }
 
