@@ -21,34 +21,49 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function fetchAll() {
-      const [leaderboard, dailyResults, leads, questions, leaderboardCount, dailyCount] = await Promise.all([
-        supabase.from('leaderboard').select('display_name, score, created_at').order('created_at', { ascending: false }).limit(20),
-        supabase.from('daily_results').select('score, total_questions, created_at').order('created_at', { ascending: false }).limit(20),
+      const [leaderboard, dailyResults, leads, questions, dailyCount] = await Promise.all([
+        supabase.from('leaderboard').select('display_name, score').order('created_at', { ascending: false }).limit(50),
+        supabase.from('daily_results').select('score, total_questions, created_at, user_id, users(first_name, last_initial)').order('created_at', { ascending: false }).limit(20),
         supabase.from('leads').select('id', { count: 'exact', head: true }),
         supabase.from('questions').select('category', { count: 'exact' }),
-        supabase.from('leaderboard').select('id', { count: 'exact', head: true }),
         supabase.from('daily_results').select('id', { count: 'exact', head: true }),
       ]);
 
-      const entries = leaderboard.data || [];
-      const uniqueNames = new Set(entries.map((e) => e.display_name));
-      const totalScore = entries.reduce((sum, e) => sum + e.score, 0);
+      const lbEntries = leaderboard.data || [];
+      const uniqueNames = new Set(lbEntries.map((e) => e.display_name));
+      const totalScore = lbEntries.reduce((sum, e) => sum + e.score, 0);
       const categories = new Set((questions.data || []).map((q) => q.category));
 
       setStats({
-        totalGames: (leaderboardCount.count || 0) + (dailyCount.count || 0),
+        totalGames: dailyCount.count || 0,
         uniquePlayers: uniqueNames.size,
         totalLeads: leads.count || 0,
         totalQuestions: questions.count || 0,
-        avgScore: entries.length > 0 ? Math.round(totalScore / entries.length) : 0,
+        avgScore: lbEntries.length > 0 ? Math.round(totalScore / lbEntries.length) : 0,
         categories: categories.size,
       });
 
-      const combined = [
-        ...entries.map((e) => ({ display_name: e.display_name, score: e.score, total_questions: 10, created_at: e.created_at, source: 'leaderboard' as const })),
-        ...(dailyResults.data || []).map((e) => ({ display_name: 'Daily Quiz', score: e.score, total_questions: e.total_questions ?? 10, created_at: e.created_at, source: 'daily' as const })),
-      ]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      type DailyRow = {
+        score: number;
+        total_questions: number | null;
+        created_at: string;
+        user_id: string | null;
+        users: { first_name: string | null; last_initial: string | null }[] | { first_name: string | null; last_initial: string | null } | null;
+      };
+      const combined = ((dailyResults.data ?? []) as unknown as DailyRow[])
+        .map((e) => {
+          const u = Array.isArray(e.users) ? e.users[0] : e.users;
+          const name = u?.first_name
+            ? `${u.first_name} ${u.last_initial ?? ''}.`.trim()
+            : 'Daily Quiz';
+          return {
+            display_name: name,
+            score: e.score,
+            total_questions: e.total_questions ?? 10,
+            created_at: e.created_at,
+            source: (e.user_id ? 'leaderboard' : 'daily') as 'leaderboard' | 'daily',
+          };
+        })
         .slice(0, 10);
 
       setRecentGames(combined);
