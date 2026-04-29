@@ -18,7 +18,6 @@ import {
 import { track } from '@/lib/analytics';
 
 export function useDailyGame() {
-  const { supabase } = useSupabaseContext();
 
   const [gameState, setGameState] = useState<'idle' | 'playing' | 'gameOver'>('idle');
   const [questionsLoading, setQuestionsLoading] = useState(false);
@@ -136,34 +135,36 @@ export function useDailyGame() {
         date: getTodayString(),
       });
 
+      // Persist to DB via server route (reads session cookie server-side).
       // Retry up to 3 times with exponential backoff (1s, 2s, 4s).
-      // localStorage is already written so the user can't replay regardless.
       // dbSyncState gates the capture form submit so we never race /api/identity.
       setDbSyncState('pending');
       (async () => {
-        const payload = {
-          quiz_date: getTodayString(),
-          session_id: sessionIdRef.current,
-          score: finalScore,
-          total_questions: totalQuestions,
-          time_seconds: seconds,
-        };
         for (let attempt = 0; attempt < 3; attempt++) {
           if (attempt > 0) {
             await new Promise((r) => setTimeout(r, 1000 * 2 ** (attempt - 1)));
           }
-          const { error } = await supabase.from('daily_results').insert(payload);
-          if (!error) {
-            setDbSyncState('synced');
-            return;
+          try {
+            const res = await fetch('/api/save-result', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ score: finalScore, totalQuestions, timeSeconds: seconds }),
+            });
+            if (res.ok) {
+              setDbSyncState('synced');
+              return;
+            }
+            const { error } = await res.json().catch(() => ({ error: 'unknown' }));
+            console.error(`[useDailyGame] save-result attempt ${attempt + 1} failed:`, error);
+          } catch (err) {
+            console.error(`[useDailyGame] save-result attempt ${attempt + 1} threw:`, err);
           }
-          console.error(`[useDailyGame] daily_results insert attempt ${attempt + 1} failed:`, error.message);
         }
-        console.error('[useDailyGame] daily_results insert failed after 3 attempts — score will not be leaderboard-eligible');
+        console.error('[useDailyGame] save-result failed after 3 attempts — score will not be leaderboard-eligible');
         setDbSyncState('failed');
       })();
     },
-    [supabase]
+    []
   );
 
   const advanceOrEnd = useCallback(
