@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Nunito } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import { SupabaseProvider } from '@/components/providers/SupabaseProvider';
 import './globals.css';
 
@@ -51,6 +52,7 @@ export default function RootLayout({
     <html lang="en" className={`${nunito.variable} antialiased`}>
       <body className="font-sans">
         <SupabaseProvider>{children}</SupabaseProvider>
+        <Analytics />
       </body>
     </html>
   );

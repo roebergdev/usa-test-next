@@ -63,30 +63,17 @@ export function track(event: AnalyticsEvent, properties?: AnalyticsProperties): 
     return;
   }
 
-  // ── Segment ───────────────────────────────────────────────────────────────
-  // npm install @segment/analytics-next
-  // Initialise AnalyticsBrowser in layout.tsx, expose via context or singleton.
-  //
-  // import { analytics } from '@/lib/segmentClient';
-  // analytics.track(event, payload);
+  // ── Vercel Analytics custom events ────────────────────────────────────────
+  // Pageviews are tracked automatically via <Analytics /> in layout.tsx.
+  // Custom events are fired here so product funnels appear in the dashboard.
+  import('@vercel/analytics').then(({ track: vaTrack }) => {
+    vaTrack(event, payload);
+  }).catch(() => {});
 
-  // ── PostHog ───────────────────────────────────────────────────────────────
-  // npm install posthog-js
-  // Call posthog.init() in layout.tsx with NEXT_PUBLIC_POSTHOG_KEY.
-  //
-  // import posthog from 'posthog-js';
-  // posthog.capture(event, payload);
-
-  // ── Mixpanel ──────────────────────────────────────────────────────────────
-  // npm install mixpanel-browser
-  // Call mixpanel.init() in layout.tsx with NEXT_PUBLIC_MIXPANEL_TOKEN.
-  //
-  // import mixpanel from 'mixpanel-browser';
-  // mixpanel.track(event, payload);
-
-  // ── Google Analytics 4 (gtag) ─────────────────────────────────────────────
-  // Load gtag.js in layout.tsx <head>. Declare the global type in env.d.ts:
-  //   interface Window { gtag: (...args: unknown[]) => void }
-  //
-  // window.gtag?.('event', event, payload);
+  // ── Zoho PageSense ────────────────────────────────────────────────────────
+  // PageSense script is loaded via <Script> in layout.tsx.
+  // pagesense is the global pushed by their snippet.
+  if (typeof window !== 'undefined' && Array.isArray((window as unknown as Record<string, unknown>).pagesense)) {
+    (window as unknown as Record<string, unknown[]>).pagesense.push(['trackEvent', event, payload]);
+  }
 }
