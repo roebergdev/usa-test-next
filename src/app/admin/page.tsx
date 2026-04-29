@@ -23,7 +23,7 @@ export default function AdminDashboard() {
     async function fetchAll() {
       const [leaderboard, dailyResults, leads, questions, dailyCount] = await Promise.all([
         supabase.from('leaderboard').select('display_name, score').order('created_at', { ascending: false }).limit(50),
-        supabase.from('daily_results').select('score, total_questions, created_at, user_id, users(first_name, last_initial)').order('created_at', { ascending: false }).limit(20),
+        supabase.from('daily_results').select('score, total_questions, created_at, user_id, users(first_name, last_initial)').order('created_at', { ascending: false }).limit(100),
         supabase.from('leads').select('id', { count: 'exact', head: true }),
         supabase.from('questions').select('category', { count: 'exact' }),
         supabase.from('daily_results').select('id', { count: 'exact', head: true }),
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
             source: (e.user_id ? 'leaderboard' : 'daily') as 'leaderboard' | 'daily',
           };
         })
-        .slice(0, 10);
+        .slice(0, 100);
 
       setRecentGames(combined);
       setLoading(false);
