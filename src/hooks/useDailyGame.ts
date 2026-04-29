@@ -78,6 +78,26 @@ export function useDailyGame() {
     if (result.timeSeconds !== undefined) setTotalSeconds(result.timeSeconds);
     if (result.userAnswers) setUserAnswers(result.userAnswers);
 
+    // Ensure the daily_results row exists in the DB for this session.
+    // This covers the case where the user returns to the results screen
+    // after the quiz — persistResult isn't called on restore, so we
+    // call /api/save-result here to guarantee the row exists before
+    // the capture form can be submitted.
+    if (!hasSavedScore()) {
+      setDbSyncState('pending');
+      fetch('/api/save-result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          score: result.score,
+          totalQuestions: result.totalQuestions,
+          timeSeconds: result.timeSeconds ?? 0,
+        }),
+      })
+        .then((r) => setDbSyncState(r.ok ? 'synced' : 'failed'))
+        .catch(() => setDbSyncState('failed'));
+    }
+
     // Fetch today's questions from the server so the game-over review screen works
     fetch('/api/daily-questions')
       .then((r) => r.json())
