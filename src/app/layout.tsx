@@ -16,12 +16,12 @@ const nunito = Nunito({
 export const metadata: Metadata = {
   title: 'USA Test - How Smart Are You?',
   description:
-    'Put your knowledge to the test - 7 questions daily, find out where you rank.',
+    'Put your knowledge to the test - 5 questions daily, find out where you rank.',
   metadataBase: new URL('https://usatest.co'),
   openGraph: {
     title: 'Take the USA Test',
     description:
-      'Put your knowledge to the test - 7 questions daily, find out where you rank.',
+      'Put your knowledge to the test - 5 questions daily, find out where you rank.',
     url: 'https://usatest.co',
     siteName: 'USA Test',
     type: 'website',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Take the USA Test',
     description:
-      'Put your knowledge to the test - 7 questions daily, find out where you rank.',
+      'Put your knowledge to the test - 5 questions daily, find out where you rank.',
     images: ['https://usatest.co/og-image.png'],
   },
 };

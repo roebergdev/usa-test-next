@@ -6,7 +6,7 @@ type Props = {
 };
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { score = '?', total = '7', streak = '0', name = '' } = await searchParams;
+  const { score = '?', total = '5', streak = '0', name = '' } = await searchParams;
 
   const ogImageUrl = `https://usatest.co/api/og?score=${score}&total=${total}&streak=${streak}${name ? `&name=${encodeURIComponent(name)}` : ''}`;
   const title = name
@@ -35,7 +35,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function SharePage({ searchParams }: Props) {
-  const { score = '?', total = '7', streak = '0', name = '' } = await searchParams;
+  const { score = '?', total = '5', streak = '0', name = '' } = await searchParams;
   const streakNum = parseInt(streak);
 
   return (
@@ -69,7 +69,7 @@ export default async function SharePage({ searchParams }: Props) {
         <div className="space-y-2">
           <p className="text-lg font-black text-amac-dark">Think you can beat it?</p>
           <p className="text-sm text-neutral-500 font-medium">
-            A new 7-question test every day — history, civics, geography, and culture.
+            A new 5-question test every day — history, civics, geography, and culture.
           </p>
         </div>
 
