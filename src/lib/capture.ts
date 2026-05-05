@@ -35,9 +35,11 @@ export function normalizeLastInitial(value: string): string {
   return value.trim().charAt(0).toUpperCase();
 }
 
-/** Build the leaderboard display name, e.g. "John S." */
+/** Build the leaderboard display name, e.g. "John S." or "John" if no initial. */
 export function buildDisplayName(firstName: string, lastInitial: string): string {
-  return `${normalizeFirstName(firstName)} ${normalizeLastInitial(lastInitial)}.`;
+  const first = normalizeFirstName(firstName);
+  const initial = normalizeLastInitial(lastInitial);
+  return initial ? `${first} ${initial}.` : first;
 }
 
 // ─── Phone formatting ─────────────────────────────────────────────────────────
@@ -71,9 +73,9 @@ export function validateCapture(data: CaptureFormData): CaptureErrors {
     errors.firstName = 'Enter your full first name.';
   }
 
-  if (!data.lastInitial.trim()) {
-    errors.lastInitial = 'Required.';
-  } else if (!/^[a-zA-Z]$/.test(data.lastInitial.trim())) {
+  // Last initial is optional. Only validate format if the user provided one.
+  const trimmedInitial = data.lastInitial.trim();
+  if (trimmedInitial && !/^[a-zA-Z]$/.test(trimmedInitial)) {
     errors.lastInitial = 'One letter only.';
   }
 
@@ -85,7 +87,7 @@ export function validateCapture(data: CaptureFormData): CaptureErrors {
   }
 
   if (!data.smsConsent) {
-    errors.smsConsent = 'Please agree to receive daily reminders.';
+    errors.smsConsent = 'Check the box to enable daily reminders.';
   }
 
   return errors;
@@ -99,5 +101,5 @@ export function hasErrors(errors: CaptureErrors): boolean {
 // Adjust to match your legal/compliance requirements before launch.
 
 export const SMS_CONSENT_TEXT =
-  'By checking this box, you agree to receive automated quiz reminders from USA Test ' +
-  'via text message. Message & data rates may apply. Reply STOP at any time to cancel.';
+  "Text me a daily reminder for tomorrow's quiz. Reply STOP to cancel anytime. " +
+  'Msg & data rates may apply.';

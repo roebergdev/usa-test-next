@@ -151,10 +151,14 @@ function getPersonalBestMessage(
 
 function Field({
   label,
+  hint,
+  helper,
   error,
   children,
 }: {
   label: string;
+  hint?: string;
+  helper?: string;
   error?: string;
   children: React.ReactNode;
 }) {
@@ -162,8 +166,16 @@ function Field({
     <div className="space-y-1">
       <label className="text-[10px] font-black text-neutral-400 uppercase tracking-[0.18em] block">
         {label}
+        {hint && (
+          <span className="ml-1.5 text-neutral-300 font-bold normal-case tracking-normal">
+            ({hint})
+          </span>
+        )}
       </label>
       {children}
+      {helper && !error && (
+        <p className="text-[11px] text-neutral-400 font-medium">{helper}</p>
+      )}
       <AnimatePresence>
         {error && (
           <motion.p
@@ -302,6 +314,16 @@ function DailyResults({
     if (personalBestMsg) {
       track('personal_best_shown', { quiz_mode: 'daily', score });
     }
+    if (!scoreSaved) {
+      // The capture form auto-opens on the results screen unless the user
+      // already saved their score in a prior session.
+      track('capture_form_opened', {
+        quiz_mode: 'daily',
+        score,
+        question_count: totalQuestions,
+        streak_count: streak,
+      });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -312,16 +334,37 @@ function DailyResults({
   };
 
   const previewName = form.firstName.trim()
-    ? buildDisplayName(form.firstName, form.lastInitial || '_')
+    ? buildDisplayName(form.firstName, form.lastInitial)
     : null;
+
+  const dismissCapture = (reason: 'cancel' | 'backdrop') => {
+    setShowCapture(false);
+    setSubmitted(false);
+    setErrors({});
+    track('capture_form_abandoned', { quiz_mode: 'daily', dismiss_reason: reason });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
     setSaveError(null);
+    track('save_score_clicked', {
+      quiz_mode: 'daily',
+      score,
+      question_count: totalQuestions,
+      streak_count: streak,
+    });
     const errs = validateCapture(form);
     setErrors(errs);
-    if (hasErrors(errs) || saving) return;
+    if (hasErrors(errs)) {
+      (Object.keys(errs) as (keyof CaptureErrors)[]).forEach((field) => {
+        if (errs[field]) {
+          track('capture_form_field_error', { quiz_mode: 'daily', field_name: field });
+        }
+      });
+      return;
+    }
+    if (saving) return;
     setSaving(true);
     try {
       await onSaveDailyContact?.(form.firstName, form.lastInitial, form.phone, form.smsConsent);
@@ -492,7 +535,7 @@ function DailyResults({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 z-40"
-            onClick={() => { setShowCapture(false); setSubmitted(false); setErrors({}); }}
+            onClick={() => dismissCapture('backdrop')}
           />
 
           {/* Sheet */}
@@ -513,7 +556,9 @@ function DailyResults({
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
                   <Trophy className="w-4 h-4 text-amac-blue" />
-                  <h3 className="font-black text-amac-dark text-base sm:text-lg">Save Your Progress</h3>
+                  <h3 className="font-black text-amac-dark text-base sm:text-lg">
+                    Claim your {score}/{totalQuestions} on today&apos;s leaderboard
+                  </h3>
                 </div>
                 {previewName && (
                   <p className="text-sm text-neutral-400 font-medium">
@@ -538,7 +583,7 @@ function DailyResults({
                       className={`${inputCls(!!errors.firstName)} flex-1`}
                     />
                   </Field>
-                  <Field label="Last Initial" error={errors.lastInitial}>
+                  <Field label="Last Initial" hint="optional" error={errors.lastInitial}>
                     <input
                       type="text"
                       autoComplete="off"
@@ -553,7 +598,11 @@ function DailyResults({
                   </Field>
                 </div>
 
-                <Field label="Phone Number" error={errors.phone}>
+                <Field
+                  label="Phone Number"
+                  helper="We use this to recognize you on future visits. Never sold."
+                  error={errors.phone}
+                >
                   <input
                     type="tel"
                     autoComplete="tel"
@@ -566,9 +615,9 @@ function DailyResults({
 
                 <ul className="space-y-1.5 py-1">
                   {[
-                    'Your score is saved and tracked over time',
-                    streak > 1 ? `Protect your ${streak}-day streak` : 'Start tracking your daily streak',
-                    'Get occasional heads-ups when quizzes drop',
+                    "Lock in your spot on today's leaderboard",
+                    streak > 1 ? `Protect your ${streak}-day streak` : 'Start a daily streak',
+                    'Daily SMS so you never break it',
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2 text-xs text-neutral-600 font-medium">
                       <CheckCircle2 className="w-3.5 h-3.5 text-amac-blue shrink-0 mt-0.5" />
@@ -640,7 +689,7 @@ function DailyResults({
 
               <button
                 type="button"
-                onClick={() => { setShowCapture(false); setSubmitted(false); setErrors({}); }}
+                onClick={() => dismissCapture('cancel')}
                 className="w-full text-center text-xs text-neutral-400 hover:text-neutral-600 font-bold transition-colors"
               >
                 Cancel

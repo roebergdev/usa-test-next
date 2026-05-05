@@ -26,7 +26,10 @@ export type AnalyticsEvent =
   | 'results_percentile_shown'
   | 'streak_shown'
   | 'personal_best_shown'
-  | 'leaderboard_preview_shown';
+  | 'leaderboard_preview_shown'
+  | 'capture_form_opened'
+  | 'capture_form_field_error'
+  | 'capture_form_abandoned';
 
 // ─── Property shapes ──────────────────────────────────────────────────────────
 
@@ -49,6 +52,10 @@ export interface AnalyticsProperties {
   checked?: boolean;
   /** Tier label shown to user, e.g. "Top 10%", "Top 25%", "Top 50%" */
   percentile_tier?: string;
+  /** For capture_form_field_error: which field failed validation */
+  field_name?: 'firstName' | 'lastInitial' | 'phone' | 'smsConsent';
+  /** For capture_form_abandoned: how the user dismissed the form */
+  dismiss_reason?: 'cancel' | 'backdrop';
 }
 
 // ─── Core track function ──────────────────────────────────────────────────────
