@@ -552,7 +552,7 @@ function DailyResults({
               <div className="w-10 h-1 bg-neutral-200 rounded-full" />
             </div>
 
-            <div className="p-5 sm:p-8 space-y-5 pb-8">
+            <div className="p-4 sm:p-8 space-y-3 sm:space-y-5 pb-5 sm:pb-8">
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
                   <Trophy className="w-4 h-4 text-amac-blue" />
@@ -567,7 +567,7 @@ function DailyResults({
                 )}
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4" noValidate>
                 <div className="flex gap-3">
                   <Field label="First Name" error={errors.firstName}>
                     <input
@@ -612,19 +612,6 @@ function DailyResults({
                     className={inputCls(!!errors.phone)}
                   />
                 </Field>
-
-                <ul className="space-y-1.5 py-1">
-                  {[
-                    "Lock in your spot on today's leaderboard",
-                    streak > 1 ? `Protect your ${streak}-day streak` : 'Start a daily streak',
-                    'Daily SMS so you never break it',
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-xs text-neutral-600 font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-amac-blue shrink-0 mt-0.5" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
 
                 <div className="space-y-1">
                   <label className="flex items-start gap-3 cursor-pointer group">
