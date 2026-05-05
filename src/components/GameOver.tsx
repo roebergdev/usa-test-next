@@ -557,7 +557,7 @@ function DailyResults({
                 <div className="flex items-center gap-2 mb-0.5">
                   <Trophy className="w-4 h-4 text-amac-blue" />
                   <h3 className="font-black text-amac-dark text-base sm:text-lg">
-                    Claim your {score}/{totalQuestions} on today&apos;s leaderboard
+                    {`Claim your ${score}/${totalQuestions} on today's leaderboard`}
                   </h3>
                 </div>
                 {previewName && (
