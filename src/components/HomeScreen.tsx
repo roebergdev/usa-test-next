@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   Trophy,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Share2,
 } from 'lucide-react';
 import { stateFlag } from '@/lib/states';
@@ -270,15 +272,18 @@ function LeaderboardPreview({
   onPlayDaily: () => void;
 }) {
   const { leaderboard } = useLeaderboard('daily');
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     track('leaderboard_viewed', { quiz_mode: 'daily', date: getTodayString() });
   }, []);
 
   const isPlaceholder = leaderboard.length === 0;
+  const visibleCount = expanded ? leaderboard.length : 5;
+  const hasMore = leaderboard.length > 5;
   const rows = isPlaceholder
     ? PLACEHOLDER_ROWS.map((r) => ({ ...r, time_seconds: null as number | null, state_code: null as string | null }))
-    : leaderboard.slice(0, 5).map((e) => ({ display_name: e.display_name, score: e.score, time_seconds: e.time_seconds ?? null, state_code: e.state_code ?? null }));
+    : leaderboard.slice(0, visibleCount).map((e) => ({ display_name: e.display_name, score: e.score, time_seconds: e.time_seconds ?? null, state_code: e.state_code ?? null }));
 
   return (
     <div className="bg-white border-2 border-amac-blue/10 rounded-2xl p-6 sm:p-8 shadow-md flex flex-col">
@@ -343,6 +348,24 @@ function LeaderboardPreview({
           );
         })}
       </div>
+
+      {/* Show more / less */}
+      {!isPlaceholder && hasMore && (
+        <button
+          onClick={() => setExpanded((e) => !e)}
+          className="mt-2 w-full py-2 text-xs font-black text-amac-blue/70 hover:text-amac-blue transition-colors flex items-center justify-center gap-1"
+        >
+          {expanded ? (
+            <>
+              Show less <ChevronUp className="w-3 h-3" />
+            </>
+          ) : (
+            <>
+              Show all {leaderboard.length} <ChevronDown className="w-3 h-3" />
+            </>
+          )}
+        </button>
+      )}
 
       {/* CTA */}
       <div className="mt-4 pt-3 border-t border-neutral-100">
