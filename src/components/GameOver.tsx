@@ -232,7 +232,7 @@ function DailyResults({
     firstName: '',
     lastInitial: '',
     phone: '',
-    smsConsent: false,
+    smsConsent: true,
   });
   const [errors, setErrors] = useState<CaptureErrors>({});
   const [submitted, setSubmitted] = useState(false);

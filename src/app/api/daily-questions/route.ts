@@ -54,9 +54,11 @@ export async function GET() {
   const seed = dateStringToSeed(today);
   const rng = createSeededRng(seed);
 
+  // Exclude sports from the daily quiz pool — kept available in study mode.
   const { data, error } = await supabaseAdmin
     .from('questions')
-    .select('id, text, options, correct_answer, category, difficulty, explanation');
+    .select('id, text, options, correct_answer, category, difficulty, explanation')
+    .neq('category', 'US Sports');
 
   if (error) {
     console.error('[api/daily-questions] Failed to fetch questions:', error.message);
